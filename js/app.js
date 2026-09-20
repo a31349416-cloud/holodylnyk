@@ -44,7 +44,13 @@ function scaleAmount(a, portions){
 let currentRecipe = null, portions = 2, timerSec = 600, timerId = null, timerLeft = 600, doneSteps = new Set(), cookIdx = 0;
 
 // theme
-function applyTheme(t){ document.documentElement.dataset.theme=t; try{localStorage.setItem("hol_theme",t)}catch{} $("#themeToggle").textContent=t==="light"?"◑":"◐"; }
+function applyTheme(t){
+  document.documentElement.dataset.theme=t;
+  try{localStorage.setItem("hol_theme",t)}catch{}
+  $("#themeToggle").textContent=t==="light"?"◑":"◐";
+  const m=document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute("content",t==="light"?"#faf4e8":"#0f0d0b");
+}
 applyTheme(document.documentElement.dataset.theme||"dark");
 $("#themeToggle").onclick=()=>applyTheme(document.documentElement.dataset.theme==="light"?"dark":"light");
 
@@ -368,13 +374,15 @@ function updProg(){
 $("#modalX").onclick=closeModal;
 $("#overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeModal();});
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){ closeCook(); closeModal(); closeDrawer(); $("#weekX").click(); return; }
+  if(e.key==="Escape"){ closeCook(); closeModal(); closeDrawer(); $("#weekX").click(); $("#helpOverlay").hidden=true; return; }
   if(e.key==="/"&&document.activeElement!==ingInput&&document.activeElement!==$("#q")&&!currentRecipe){ e.preventDefault(); ingInput.focus(); return; }
   if(!$("#cookOverlay").hidden){
     if(e.key==="ArrowRight"){ cookIdx++; renderCook(); }
     if(e.key==="ArrowLeft"){ cookIdx--; renderCook(); }
   }
   if(e.key==="Tab") trapTab(e);
+  if(e.target.matches("input,select,textarea")) return;
+  if(e.key==="?"){ $("#helpOverlay").hidden=false; return; }
 });
 // focus trap: Tab не виходить з верхнього відкритого вікна
 function topOverlay(){
@@ -713,6 +721,19 @@ function openDeep(){
   if(m&&window.RECIPES.some(r=>r.id===m[1])) openModal(m[1]);
 }
 window.addEventListener("hashchange",openDeep);
+
+$("#helpBtn").onclick=()=>{ $("#helpOverlay").hidden=false; };
+$("#helpX").onclick=()=>{ $("#helpOverlay").hidden=true; };
+$("#helpOverlay").addEventListener("click",e=>{ if(e.target.id==="helpOverlay") $("#helpOverlay").hidden=true; });
+
+// first-visit hint
+try{
+  if(!localStorage.getItem("hol_seen")){
+    setTimeout(()=>toast("Додай продукти — або тисни кубик удачі"),900);
+    setTimeout(()=>{ if(!selected.size) toast("Підказка: поле «Не хочу» прибирає нелюбове"); },4200);
+    localStorage.setItem("hol_seen","1");
+  }
+}catch{}
 
 // init
 renderChips();renderExcl();render();renderDrawer();renderRecent();renderKitchen();openDeep();

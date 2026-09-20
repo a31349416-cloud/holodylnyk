@@ -159,7 +159,7 @@
 </section>
 
 <footer class="footer">
-  <div><b>🧊 HOLODYLNYK v5</b><p>48 рецептів • працює офлайн • <kbd>/</kbd> — пошук • <button class="linkbtn" id="selfTestBtn">перевірка даних</button>.</p></div>
+  <div><b>🧊 HOLODYLNYK v5</b><p>48 рецептів • працює офлайн • <kbd>/</kbd> — пошук • <button class="linkbtn" id="helpBtn">гарячі клавіші</button> • <button class="linkbtn" id="selfTestBtn">перевірка даних</button>.</p></div>
   <div class="foot-links"><span>борщ • сирники • деруни • вареники • шакшука • рамен • медовик</span></div>
 </footer>
 </main>
@@ -240,6 +240,23 @@
         <button class="btn ghost sm" id="copyWeekBtn">⧉ Копіювати меню</button>
         <button class="btn ghost sm" id="weekToShop">+ Все відсутнє в список покупок</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- HELP -->
+<div class="overlay" id="helpOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Гарячі клавіші" style="max-width:520px">
+    <button class="modal-x" id="helpX" style="top:16px;right:16px">✕</button>
+    <div class="modal-body" style="padding-top:54px">
+      <h2 style="font-family:var(--font-d);font-size:20px;margin-bottom:12px">⌨️ Гарячі клавіші</h2>
+      <ul class="m-ings">
+        <li><span><kbd>/</kbd> — фокус на пошук продуктів</span></li>
+        <li><span><kbd>Enter</kbd> — додати продукт</span></li>
+        <li><span><kbd>←</kbd> <kbd>→</kbd> — кроки в режимі готування</span></li>
+        <li><span><kbd>Esc</kbd> — закрити вікна</span></li>
+        <li><span><kbd>?</kbd> — ця довідка</span></li>
+      </ul>
     </div>
   </div>
 </div>
