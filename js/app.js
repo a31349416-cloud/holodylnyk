@@ -15,10 +15,42 @@ function fuzzyHay(hay, q){
 const STAPLES = ["сіль","вода","олія","оливкова олія","чорний перець"];
 function staplesOn(){ const el=$("#staples"); return !el||el.checked; }
 function isStaple(name){ return staplesOn()&&STAPLES.some(s=>ingMatch(name,s)); }
+// synonym groups: different names, same product
+const SYNONYMS = [
+  ["курка","куряче філе","куряча грудка","стегно"],
+  ["макарони","спагеті","локшина"],
+  ["сир","сир твердий","кисломолочний сир","пармезан","фета","бринза","крем-сир","плавлений сир","моцарела"],
+  ["гриби","печериці","гриби сушені","білі гриби"],
+  ["ковбаса","ковбаса варена","копченості"],
+  ["огірок","огірки","огірки мариновані"],
+  ["помідор","помідори","помідори чері"],
+  ["яйце","яйця"],
+  ["цибуля","цибуля червона"],
+  ["зелень","кріп","петрушка","зелена цибуля","рукола"],
+  ["олія","оливкова олія"],
+  ["рис","рис варений"],
+  ["квасоля","нут"],
+];
+function canon(s){
+  s=unorm(s);
+  for(const g of SYNONYMS){
+    if(g.some(v=>s===v||s.includes(v))) return g[0];
+  }
+  return s;
+}
+function bagEq(a, b){
+  const wa=unorm(a).split(" ").filter(Boolean).sort().join(" ");
+  const wb=unorm(b).split(" ").filter(Boolean).sort().join(" ");
+  return wa&&wa===wb;
+}
 function ingMatch(a, b){
   a=norm(a); b=norm(b);
   if(a.includes(b)||b.includes(a)) return true;
-  const sa=stem(a), sb=stem(b);
+  if(bagEq(a,b)) return true;
+  const ca=canon(a), cb=canon(b);
+  if(ca===cb) return true;
+  if(ca.includes(cb)||cb.includes(ca)) return true;
+  const sa=stem(ca), sb=stem(cb);
   return sa.length>2&&sb.length>2&&(sa.includes(sb)||sb.includes(sa));
 }
 // responsive image helper (Unsplash w= param)
