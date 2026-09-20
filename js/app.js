@@ -161,6 +161,10 @@ function render(){
   items.sort((a,b)=>{
     if(sort==="time") return a.time-b.time;
     if(sort==="kcal") return a.kcal-b.kcal;
+    if(sort==="rate"){
+      const ra=rateAvg(a.id), rb=rateAvg(b.id);
+      return (rb?rb.avg:-1)-(ra?ra.avg:-1)||b._s.pct-a._s.pct;
+    }
     if(sort==="missing") return a._s.miss.length-b._s.miss.length||b._s.pct-a._s.pct;
     if(selected.size===0) return 0;
     return b._s.pct-a._s.pct;
@@ -262,6 +266,8 @@ function toggleFav(id){
 });
 $("#clearAll").onclick=()=>{selected.clear();excluded.clear();$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
 $("#emptyReset").onclick=()=>$("#clearAll").click();
+$("#emptyFast").onclick=()=>{ $("#clearAll").click(); $("#maxTime").value="30"; $("#sort").value="time"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
+$("#emptyTop").onclick=()=>{ $("#clearAll").click(); $("#sort").value="rate"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
 $("#favToggle").onclick=()=>{const c=$("#onlyFav");c.checked=!c.checked;render();document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"});};
 
 // random

@@ -123,6 +123,7 @@
       <select id="sort">
         <option value="match">Спочатку збіг</option>
         <option value="missing">Найменше докупити</option>
+        <option value="rate">Найкращий рейтинг</option>
         <option value="time">Найшвидші</option>
         <option value="kcal">Найлегші</option>
       </select>
@@ -148,8 +149,12 @@
   <div class="empty" id="empty" hidden>
     <div class="empty-emoji">🍳</div>
     <h3>Нічого не знайдено</h3>
-    <p>Спробуй прибрати фільтри або додати менше продуктів.</p>
-    <button class="btn primary" id="emptyReset">Скинути фільтри</button>
+    <p>Спробуй прибрати фільтри — або обери швидкий шлях:</p>
+    <div class="empty-row">
+      <button class="btn primary sm" id="emptyFast">⚡ Швидкі до 30 хв</button>
+      <button class="btn ghost sm" id="emptyTop">★ Топ за рейтингом</button>
+      <button class="btn ghost sm" id="emptyReset">Скинути фільтри</button>
+    </div>
   </div>
 </section>
 
