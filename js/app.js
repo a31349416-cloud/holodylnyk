@@ -698,6 +698,32 @@ $("#scrollTop").onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
 window.addEventListener("offline",()=>toast("Офлайн — показуємо збережене"));
 window.addEventListener("online",()=>toast("Знову онлайн"));
 
+// backup / restore / wipe
+const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen"];
+$("#backupBtn").onclick=()=>{
+  const data={};
+  HOL_KEYS.forEach(k=>{ try{data[k]=JSON.parse(localStorage.getItem(k)??"null")}catch{data[k]=null} });
+  download("holodylnyk-backup.json",JSON.stringify(data,null,2));
+  toast("Бекап збережено");
+};
+$("#restoreInput").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const data=JSON.parse(rd.result);
+      if(!data||typeof data!=="object") throw 0;
+      HOL_KEYS.forEach(k=>{ if(k in data) localStorage.setItem(k,JSON.stringify(data[k])); });
+      toast("Відновлено — перезавантажую"); setTimeout(()=>location.reload(),900);
+    }catch{ toast("Битий файл бекапу"); }
+  };
+  rd.readAsText(f); e.target.value="";
+});
+$("#wipeBtn").onclick=()=>{
+  if(!confirm("Стерти всі мої дані (продукти, улюблене, історія)?")) return;
+  HOL_KEYS.forEach(k=>{ try{localStorage.removeItem(k)}catch{} });
+  location.reload();
+};
 // self-test даних
 $("#selfTestBtn").onclick=()=>{
   const bad=[];
