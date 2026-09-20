@@ -706,7 +706,7 @@ $("#customDel").onclick=()=>{
 function openCook(){
   if(!currentRecipe) return;
   cookIdx=0; $("#cookOverlay").hidden=false; document.body.style.overflow="hidden";
-  renderCook();
+  lockScreen(); renderCook();
 }
 function renderCook(){
   const steps=currentRecipe.steps, n=steps.length;
@@ -717,11 +717,31 @@ function renderCook(){
   $("#cookProg").style.width=((cookIdx+1)/n*100)+"%";
   $("#cookPrev").disabled=cookIdx===0;
 }
-function closeCook(){ $("#cookOverlay").hidden=true; if($("#overlay").hidden) document.body.style.overflow=""; }
-$("#cookPrev").onclick=()=>{cookIdx--;renderCook();};
-$("#cookNext").onclick=()=>{ if(cookIdx<currentRecipe.steps.length-1){cookIdx++;renderCook();} else closeCook(); };
+function closeCook(){ stopSpeak(); releaseScreen(); $("#cookOverlay").hidden=true; if($("#overlay").hidden) document.body.style.overflow=""; }
+$("#cookPrev").onclick=()=>{stopSpeak();cookIdx--;renderCook();};
+$("#cookNext").onclick=()=>{stopSpeak(); if(cookIdx<currentRecipe.steps.length-1){cookIdx++;renderCook();} else closeCook(); };
 $("#cookDone").onclick=()=>{ closeCook(); toast("Смачного!"); };
 $("#cookX").onclick=closeCook;
+// wake lock: екран не гасне під час готування
+let wakeLock=null;
+async function lockScreen(){
+  try{ if("wakeLock" in navigator) wakeLock=await navigator.wakeLock.request("screen"); }catch{}
+}
+function releaseScreen(){ try{ wakeLock?.release(); wakeLock=null; }catch{} }
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden&&!$("#cookOverlay").hidden) lockScreen();
+});
+// озвучка кроку
+function stopSpeak(){ try{ speechSynthesis.cancel(); }catch{} }
+$("#cookSpeak").onclick=()=>{
+  if(!currentRecipe) return;
+  try{
+    stopSpeak();
+    const u=new SpeechSynthesisUtterance(currentRecipe.steps[cookIdx]);
+    u.lang="uk-UA"; u.rate=1;
+    speechSynthesis.speak(u);
+  }catch{ toast("Озвучка не підтримується"); }
+};
 
 // shopping list (with amounts × portions)
 $("#toListBtn").onclick=()=>{
@@ -781,17 +801,21 @@ function resetTimerUI(){$("#timerDigits").textContent=fmtT(timerLeft);}
 document.querySelectorAll(".timer-row button[data-t]").forEach(b=>{
   b.onclick=()=>{document.querySelectorAll(".timer-row button[data-t]").forEach(x=>x.classList.remove("on"));b.classList.add("on");timerSec=+b.dataset.t*60;timerLeft=timerSec;stopTimer();resetTimerUI();};
 });
+function baseTitle(){
+  return currentRecipe&&!$("#overlay").hidden?`${currentRecipe.title} — HOLODYLNYK`:"HOLODYLNYK — що приготувати з того, що є";
+}
 $("#timerStart").onclick=function(){
-  if(timerId){stopTimer();this.textContent="Старт";return;}
+  if(timerId){stopTimer();this.textContent="Старт";document.title=baseTitle();return;}
   if(timerLeft<=0) timerLeft=timerSec;
   this.textContent="Пауза";
   timerId=setInterval(()=>{
     timerLeft--;
-    if(timerLeft<=0){timerLeft=0;resetTimerUI();stopTimer();$("#timerStart").textContent="Старт";toast("Час вийшов!");beep();return;}
+    if(timerLeft<=0){timerLeft=0;resetTimerUI();stopTimer();$("#timerStart").textContent="Старт";document.title=baseTitle();toast("Час вийшов!");beep();return;}
     resetTimerUI();
+    document.title=`⏱ ${fmtT(timerLeft)} — ${currentRecipe?currentRecipe.title:"таймер"}`;
   },1000);
 };
-$("#timerReset").onclick=()=>{stopTimer();timerLeft=timerSec;$("#timerStart").textContent="Старт";resetTimerUI();};
+$("#timerReset").onclick=()=>{stopTimer();timerLeft=timerSec;$("#timerStart").textContent="Старт";resetTimerUI();document.title=baseTitle();};
 function stopTimer(){clearInterval(timerId);timerId=null;}
 function beep(){
   try{
