@@ -604,7 +604,7 @@ function renderWeek(){
   const total=weekPlan.reduce((a,w)=>a+w.time,0);
   $("#weekSub").textContent=weekPlan.length?`${weekPlan.length} страв • разом ${fmtDur(total)} готування • докупити: ${all.length?all.join(", "):"нічого — все є"}`:"";
 }
-$("#weekBtn").onclick=()=>{ weekPlan=genWeek(); renderWeek(); $("#weekOverlay").hidden=false; document.body.style.overflow="hidden"; };
+$("#weekBtn").onclick=()=>{ weekPlan=genWeek(); renderWeek(); renderPlans(); $("#weekOverlay").hidden=false; document.body.style.overflow="hidden"; };
 $("#weekRegen").onclick=()=>{ weekPlan=genWeek(); renderWeek(); };
 function pickCat(cat){
   const pool=poolFiltered().filter(r=>r.cat===cat);
@@ -769,6 +769,32 @@ $("#similarRow").addEventListener("click",e=>{
   const c=e.target.closest("[data-id]"); if(c) openModal(c.dataset.id);
 });
 
+// saved week plans
+function getPlans(){ try{const v=JSON.parse(localStorage.getItem("hol_plans")||"[]");return Array.isArray(v)?v:[]}catch{return[]} }
+function savePlans(p){ try{localStorage.setItem("hol_plans",JSON.stringify(p))}catch{} }
+function renderPlans(){
+  const plans=getPlans(), box=$("#planList"); if(!box) return;
+  box.innerHTML=plans.length?plans.map((p,i)=>`<div data-i="${i}">${esc(p.name)} <small>• ${p.items.length} страв</small><button data-d="${i}" aria-label="Видалити">✕</button></div>`).join(""):`<small style="color:var(--mut)">Збережених меню поки немає.</small>`;
+}
+$("#planSave").onclick=()=>{
+  if(!weekPlan.length){ toast("Спочатку згенеруй меню"); return; }
+  const plans=getPlans();
+  const name=$("#planName").value.trim()||`Меню ${plans.length+1}`;
+  plans.push({name, items:weekPlan.map(w=>({day:w.day,id:w.id}))});
+  savePlans(plans); $("#planName").value=""; renderPlans();
+  toast("Меню збережено");
+};
+$("#planList").addEventListener("click",e=>{
+  const del=e.target.closest("[data-d]");
+  if(del){ e.stopPropagation(); const plans=getPlans(); plans.splice(+del.dataset.d,1); savePlans(plans); renderPlans(); return; }
+  const row=e.target.closest("[data-i]");
+  if(!row) return;
+  const p=getPlans()[+row.dataset.i]; if(!p) return;
+  weekPlan=p.items.map(x=>{ const r=findRecipe(x.id); return r?{day:x.day,...r,_s:score(r)}:null; }).filter(Boolean);
+  if(!weekPlan.length){ toast("Рецептів уже немає"); return; }
+  renderWeek();
+});
+
 // cook mode
 function openCook(){
   if(!currentRecipe) return;
@@ -921,7 +947,7 @@ $("#installBtn").onclick=async ()=>{
 };
 
 // backup / restore / wipe
-const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen","hol_custom","hol_hidden"];
+const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen","hol_custom","hol_hidden","hol_plans"];
 $("#backupBtn").onclick=()=>{
   const data={};
   HOL_KEYS.forEach(k=>{ try{data[k]=JSON.parse(localStorage.getItem(k)??"null")}catch{data[k]=null} });

@@ -201,6 +201,12 @@ main,.nav{position:relative;z-index:2}
 .week-list b{font-size:14px;display:block}
 .week-list small{color:var(--mut)}
 .week-foot{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.plan-row{display:flex;gap:8px;margin-top:14px}
+.plan-row input{flex:1;background:var(--input);border:1px solid var(--line);border-radius:12px;padding:9px 12px;color:var(--txt);font-family:var(--font-b);font-size:13px;outline:none}
+.plan-list{display:grid;gap:8px;margin-top:10px}
+.plan-list div{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:13.5px;font-weight:700;cursor:pointer}
+.plan-list div small{color:var(--mut);font-weight:400}
+.plan-list div button{margin-left:auto;background:none;border:0;color:var(--mut);cursor:pointer;font-size:14px}
 .timer-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .timer-chips button{background:rgba(255,122,24,.12);border:1px solid rgba(255,122,24,.4);color:var(--txt);border-radius:100px;padding:6px 12px;font-size:12.5px;font-weight:800;cursor:pointer}
 .timer-chips button:hover{background:var(--acc);color:#fff}
