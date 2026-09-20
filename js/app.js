@@ -369,6 +369,30 @@ $("#clearAll").onclick=()=>{selected.clear();excluded.clear();onlyMine=false;onl
 $("#emptyReset").onclick=()=>$("#clearAll").click();
 $("#emptyFast").onclick=()=>{ $("#clearAll").click(); $("#maxTime").value="30"; $("#sort").value="time"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
 $("#emptyTop").onclick=()=>{ $("#clearAll").click(); $("#sort").value="rate"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
+$("#emptySample").onclick=()=>{
+  ["картопля","яйця","цибуля","морква","молоко"].forEach(s=>selected.add(s));
+  excluded.clear(); onlyMine=false; onlySeason=false; onlyCooked=false;
+  $("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#maxKcal").value="";$("#level").value="";$("#sort").value="match";
+  $("#onlyFav").checked=false;$("#onlyPossible").checked=false;
+  document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));
+  renderChips();renderExcl();persistFilters();render();
+  toast("Холодильник наповнено для прикладу");
+  document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"});
+};
+// dish of the day (deterministic by date)
+function dishOfDay(){
+  const all=allRecipes(); if(!all.length) return null;
+  const now=new Date();
+  const day=Math.floor(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())/864e5);
+  return all[day%all.length];
+}
+function renderDishDay(){
+  const r=dishOfDay(), box=$("#dishDay"); if(!r||!box) return;
+  box.dataset.id=r.id;
+  box.innerHTML=`<img loading="lazy" decoding="async" src="${r.img}" ${imgAttr(r.img)} alt="" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${r.id}/200/200'"><div><small>РЕЦЕПТ ДНЯ</small><b>${esc(r.title)}</b></div><span style="margin-left:auto">→</span>`;
+}
+$("#dishDay").addEventListener("click",e=>{ const id=e.currentTarget.dataset.id; if(id) openModal(id); });
+$("#dishDay").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const id=e.currentTarget.dataset.id; if(id) openModal(id); } });
 $("#favToggle").onclick=()=>{const c=$("#onlyFav");c.checked=!c.checked;render();document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"});};
 
 // random (respects current filters)
@@ -989,4 +1013,4 @@ try{
 }catch{}
 
 // init
-renderChips();renderExcl();render();renderDrawer();renderRecent();renderKitchen();openDeep();
+renderChips();renderExcl();render();renderDrawer();renderRecent();renderKitchen();renderDishDay();openDeep();
