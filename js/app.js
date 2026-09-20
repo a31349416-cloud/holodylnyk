@@ -10,7 +10,15 @@ function safeParse(key, fb){
 const selected = new Set(safeParse("hol_ings", []));
 const favs = new Set(safeParse("hol_favs", []));
 const excluded = new Set(safeParse("hol_excl", []));
-let shopList = safeParse("hol_shop", []);
+let shopList = safeParse("hol_shop", []).map(e=>typeof e==="string"?{n:e,a:""}:e);
+function saveShop(){ try{localStorage.setItem("hol_shop",JSON.stringify(shopList))}catch{} }
+function shopText(){ return shopList.map(e=>e.a?`${e.n} — ${e.a}`:e.n); }
+function scaleAmount(a, portions){
+  const m=String(a||"").match(/([\d.]+)\s*(.*)/);
+  if(!m) return a||"";
+  const num=Math.round(parseFloat(m[1])*(portions/2)*10)/10;
+  return `${num} ${m[2]}`.trim();
+}
 let currentRecipe = null, portions = 2, timerSec = 600, timerId = null, timerLeft = 600, doneSteps = new Set(), cookIdx = 0;
 
 // theme
@@ -299,19 +307,11 @@ function tipFor(r){
   return tips[r.id]||"Куштуй в процесі і доводь сіль/кислоту в кінці — це 80% смаку.";
 }
 function renderModalIngs(){
-  const base=portions/2;
-  const fmt=(a)=>{
-    const m=a.match(/([\d.]+)\s*(.*)/);
-    if(!m) return a;
-    let num=parseFloat(m[1])*base;
-    num=Math.round(num*10)/10;
-    return `${num} ${m[2]}`;
-  };
   $("#portionVal").textContent=portions;
   $("#mIngs").innerHTML=currentRecipe.ings.map(ing=>{
     const n=norm(ing.n);
     const have=[...selected].some(s=>n.includes(s)||s.includes(n));
-    return `<li class="${have?'have':'miss-ing'}" data-n="${esc(ing.n)}" title="${have?'Є у твоїх продуктах':'Тисни щоб додати в мої продукти'}"><span><span class="dot">${have?'●':'○'}</span> ${esc(ing.n)}</span><b>${esc(fmt(ing.a))}</b></li>`;
+    return `<li class="${have?'have':'miss-ing'}" data-n="${esc(ing.n)}" title="${have?'Є у твоїх продуктах':'Тисни щоб додати в мої продукти'}"><span><span class="dot">${have?'●':'○'}</span> ${esc(ing.n)}</span><b>${esc(scaleAmount(ing.a,portions))}</b></li>`;
   }).join("");
 }
 $("#mIngs").addEventListener("click",e=>{
@@ -409,8 +409,13 @@ $("#weekOverlay").addEventListener("click",e=>{ if(e.target.id==="weekOverlay") 
 $("#weekList").addEventListener("click",e=>{ const li=e.target.closest("li[data-id]"); if(!li) return; $("#weekX").click(); openModal(li.dataset.id); });
 $("#weekToShop").onclick=()=>{
   let added=0;
-  weekPlan.flatMap(w=>score(w).miss).forEach(m=>{ if(!shopList.includes(m)){shopList.push(m);added++;} });
-  try{localStorage.setItem("hol_shop",JSON.stringify(shopList))}catch{}
+  weekPlan.flatMap(w=>score(w).miss).forEach(m=>{
+    if(shopList.some(e=>e.n===m)) return;
+    const src=weekPlan.map(w=>w).find(w=>w.ings.some(i=>i.n===m));
+    const ing=src?src.ings.find(i=>i.n===m):null;
+    shopList.push({n:m,a:ing?ing.a:""}); added++;
+  });
+  saveShop();
   render(); renderDrawer(); toast(added?`У список: +${added}`:"Все вже в списку");
 };
 
@@ -478,25 +483,29 @@ $("#cookNext").onclick=()=>{ if(cookIdx<currentRecipe.steps.length-1){cookIdx++;
 $("#cookDone").onclick=()=>{ closeCook(); toast("Смачного!"); };
 $("#cookX").onclick=closeCook;
 
-// shopping list
+// shopping list (with amounts × portions)
 $("#toListBtn").onclick=()=>{
   if(!currentRecipe) return;
   const s=score(currentRecipe);
   let added=0;
-  s.miss.forEach(m=>{ if(!shopList.includes(m)){shopList.push(m);added++;} });
-  try { localStorage.setItem("hol_shop",JSON.stringify(shopList)); } catch {}
+  s.miss.forEach(m=>{
+    if(shopList.some(e=>e.n===m)) return;
+    const ing=currentRecipe.ings.find(i=>i.n===m);
+    shopList.push({n:m,a:ing?scaleAmount(ing.a,portions):""}); added++;
+  });
+  saveShop();
   render(); renderDrawer();
-  toast(added?`Додано в список: ${added}`:"Все вже в списку ✓");
+  toast(added?`Додано в список: ${added} (×${portions} порц.)`:"Все вже в списку ✓");
   openDrawer();
 };
 function renderDrawer(){
   $("#listCount").textContent=shopList.length;
-  $("#drawerList").innerHTML=shopList.length?shopList.map((x,i)=>`<li>${esc(x)}<button data-d="${i}">✕</button></li>`).join(""):`<li style="opacity:.6">Порожньо. Відкрий рецепт → «Додати відсутнє»</li>`;
+  $("#drawerList").innerHTML=shopList.length?shopList.map((e,i)=>`<li>${esc(e.a?`${e.n} — ${e.a}`:e.n)}<button data-d="${i}">✕</button></li>`).join(""):`<li style="opacity:.6">Порожньо. Відкрий рецепт → «Додати відсутнє»</li>`;
 }
 $("#drawerList").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
   shopList.splice(+b.dataset.d,1);
-  try { localStorage.setItem("hol_shop",JSON.stringify(shopList)); } catch {}
+  saveShop();
   renderDrawer(); render();
 });
 function openDrawer(){$("#drawerWrap").hidden=false;renderDrawer();}
@@ -504,14 +513,14 @@ function closeDrawer(){$("#drawerWrap").hidden=true;}
 $("#listToggle").onclick=openDrawer;
 $("#drawerX").onclick=closeDrawer;
 $("#drawerBg").onclick=closeDrawer;
-$("#clearList").onclick=()=>{shopList=[];try{localStorage.setItem("hol_shop","[]");}catch{}renderDrawer();render();};
+$("#clearList").onclick=()=>{shopList=[];saveShop();renderDrawer();render();};
 $("#copyList").onclick=async ()=>{
-  const text="Список покупок:\n- "+shopList.join("\n- ");
+  const text="Список покупок:\n- "+shopText().join("\n- ");
   try { await navigator.clipboard.writeText(text); toast("Скопійовано в буфер"); }
   catch { toast("Не вдалось скопіювати"); }
 };
 $("#shareTg").onclick=()=>{
-  const text=encodeURIComponent("Мій список покупок (HOLODYLNYK):\n- "+shopList.join("\n- "));
+  const text=encodeURIComponent("Мій список покупок (HOLODYLNYK):\n- "+shopText().join("\n- "));
   window.open(`https://t.me/share/url?url=&text=${text}`,"_blank");
 };
 
