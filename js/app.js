@@ -50,6 +50,10 @@ function scaleAmount(a, portions){
 }
 let currentRecipe = null, portions = 2, timerSec = 600, timerId = null, timerLeft = 600, doneSteps = new Set(), cookIdx = 0;
 let lastItems = [];
+let onlyMine = false, onlySeason = false;
+// autumn season (Sep–Nov)
+const SEASON_IDS = ["pumpkin-soup","pumpkin-porridge","mushroom-soup","mushroom-yushka","apple-pie","medovyk","uzvar","cottage-casserole","kysil","banosh"];
+function isSeason(r){ const m=new Date().getMonth(); return (m===8||m===9||m===10)&&SEASON_IDS.includes(r.id); }
 
 // theme
 function applyTheme(t){
@@ -186,6 +190,8 @@ function render(){
   let items=allRecipes().map(r=>({...r,_s:score(r)}));
   if(onlyFav) items=items.filter(r=>favs.has(r.id));
   if(onlyPoss) items=items.filter(r=>r._s.pct===100);
+  if(onlyMine) items=items.filter(r=>isOwn(r));
+  if(onlySeason) items=items.filter(r=>isSeason(r));
   if(excluded.size) items=items.filter(r=>!isExcluded(r));
   if(q) items=items.filter(r=>fuzzyHay(r.title+" "+r.desc+" "+r.ings.map(i=>i.n).join(" "),q));
   if(cat) items=items.filter(r=>r.cat===cat);
@@ -225,7 +231,7 @@ function render(){
       <div class="card-body">
         <h3>${hl(r.title,q)}</h3><p>${r.desc}</p>
         ${rateMini(r.id)}
-        <div class="meta"><span class="t">⏱ ${r.time} хв</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}${isOwn(r)?'<span class="own-tag">✎ моє</span>':""}</div>
+        <div class="meta"><span class="t">⏱ ${r.time} хв</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}${isOwn(r)?'<span class="own-tag">✎ моє</span>':""}${isSeason(r)?'<span class="diet-tag">🍂 сезон</span>':""}</div>
         ${selected.size?`<div class="miss">${r._s.miss.length?`Докупити: <b>${r._s.miss.slice(0,3).join(", ")}${r._s.miss.length>3?"…":""}</b>`:"✅ Все є! Можна готувати"}</div>`:`<div class="miss">Натисни щоб відкрити рецепт →</div>`}
       </div>
     </article>`).join("");
@@ -258,6 +264,8 @@ $("#quickRow").addEventListener("click",e=>{
   if(k==="possible"){ $("#onlyPossible").checked=on; }
   if(k==="soup"){ $("#cat").value=on?"перші страви":""; }
   if(k==="sweet"){ $("#cat").value=on?"десерти":""; }
+  if(k==="season"){ onlySeason=on; }
+  if(k==="mine"){ onlyMine=on; }
   persistFilters(); render();
 });
 grid.addEventListener("click",e=>{
@@ -299,7 +307,7 @@ function toggleFav(id){
 ["q","cat","diet","maxTime","maxKcal","sort","onlyFav","onlyPossible","staples"].forEach(id=>{
   $("#"+id).addEventListener("input",()=>{persistFilters();render();});
 });
-$("#clearAll").onclick=()=>{selected.clear();excluded.clear();$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#maxKcal").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;$("#staples").checked=true;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
+$("#clearAll").onclick=()=>{selected.clear();excluded.clear();onlyMine=false;onlySeason=false;$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#maxKcal").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;$("#staples").checked=true;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
 $("#emptyReset").onclick=()=>$("#clearAll").click();
 $("#emptyFast").onclick=()=>{ $("#clearAll").click(); $("#maxTime").value="30"; $("#sort").value="time"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
 $("#emptyTop").onclick=()=>{ $("#clearAll").click(); $("#sort").value="rate"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
