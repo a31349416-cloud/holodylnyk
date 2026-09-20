@@ -394,7 +394,7 @@ $("#emptySample").onclick=()=>{
 };
 // dish of the day (deterministic by date)
 function dishOfDay(){
-  const all=allRecipes(); if(!all.length) return null;
+  const all=allRecipes().filter(r=>!hidden.has(r.id)); if(!all.length) return null;
   const now=new Date();
   const day=Math.floor(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())/864e5);
   return all[day%all.length];
@@ -689,11 +689,16 @@ function renderKitchen(){
   const c=getCooked(), dt=getCookDates(), sec=$("#kitchenSection");
   if(!c.length){ sec.hidden=true; return; }
   sec.hidden=false;
+  const freq={};
+  c.forEach(id=>{freq[id]=(freq[id]||0)+1;});
+  const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3)
+    .map(([id,n])=>{ const r=findRecipe(id); return r?`${esc(r.title)} ×${n}`:null; }).filter(Boolean).join(", ");
   $("#kitchenStats").innerHTML=
     `<div><b>${c.length}</b>приготовано страв</div>`+
     `<div><b>${streak(dt)}🔥</b>днів поспіль</div>`+
     `<div><b>${new Set(c).size}</b>різних рецептів</div>`+
-    `<div><b>${favs.size}</b>в улюбленому</div>`;
+    `<div><b>${favs.size}</b>в улюбленому</div>`+
+    (top?`<div><b>Топ</b>${top}</div>`:"");
   const items=c.slice(-8).reverse().map((id,i)=>{
     const r=findRecipe(id); if(!r) return "";
     const d=dt[dt.length-1-i]||"";
@@ -759,7 +764,7 @@ $("#customDel").onclick=()=>{
 function renderSimilar(){
   const box=$("#similarRow"); if(!box||!currentRecipe) return;
   const sim=allRecipes()
-    .filter(x=>x.id!==currentRecipe.id&&x.cat===currentRecipe.cat&&!isExcluded(x))
+    .filter(x=>x.id!==currentRecipe.id&&x.cat===currentRecipe.cat&&!isExcluded(x)&&!hidden.has(x.id))
     .map(x=>({...x,_s:score(x)}))
     .sort((a,b)=>b._s.pct-a._s.pct)
     .slice(0,3);
