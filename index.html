@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOLODYLNYK — що приготувати з того, що є</title>
+<meta name="description" content="Введи продукти з холодильника — отримай гарні рецепти. 32 перевірені рецепти українською, таймер, список покупок, режим готування.">
+<meta name="theme-color" content="#0f0d0b">
+<meta property="og:title" content="HOLODYLNYK — що приготувати з того, що є?">
+<meta property="og:description" content="Введи продукти — отримай рецепти з % збігу, таймером і списком покупок.">
+<meta property="og:type" content="website">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("hol_theme")||"dark"}catch{}</script>
+</head>
+<body>
+<div class="bg-orbs"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span></div>
+<div class="grain"></div>
+
+<a class="skip" href="#grid-section">Перейти до рецептів</a>
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#top"><span class="logo-ice">🧊</span> HOLODYLNYK</a>
+    <nav class="nav-links">
+      <a href="#search">Рецепти</a>
+      <a href="#how">Як це працює</a>
+      <a href="#grid-section">Каталог</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="btn ghost sm" id="themeToggle" title="Світла / темна тема">◐</button>
+      <button class="btn ghost sm" id="favToggle" title="Улюблене">♡ <span id="favCount">0</span></button>
+      <button class="btn ghost sm" id="listToggle" title="Список покупок">🧾 <span id="listCount">0</span></button>
+      <button class="btn primary sm" id="randomBtn">🎲 Мені пощастить</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge" id="heroBadge">✦ 32 перевірені рецепти • українською • без реєстрації</div>
+  <h1>Що приготувати<br><em>з того, що є?</em></h1>
+  <p class="hero-sub">Введи продукти з холодильника — ми покажемо страви, відсортовані за збігом. Натисни на рецепт — отримаєш кроки, таймер і список докупити.</p>
+  <div class="float-dishes" aria-hidden="true"><span>🥘</span><span>🥗</span><span>🍰</span><span>🍲</span></div>
+
+  <div class="search-card" id="search">
+    <div class="chips" id="chips"></div>
+    <div class="search-row">
+      <input id="ingInput" type="text" placeholder="Наприклад: картопля + яйця… (Enter щоб додати, / — фокус)" autocomplete="off">
+      <button class="btn icon" id="voiceBtn" title="Голосовий ввід">🎙</button>
+      <button class="btn primary" id="addBtn">Додати</button>
+    </div>
+    <div class="suggest" id="suggest"></div>
+    <div class="excl-row">
+      <span>Не хочу:</span>
+      <div class="chips small" id="exclChips"></div>
+      <input id="exclInput" type="text" placeholder="цибуля, свинина… (Enter)" autocomplete="off">
+    </div>
+    <div class="popular">
+      <span>Популярне:</span>
+      <div id="popularRow"></div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="statMatch">40</b><span>рецептів підходить</span></div>
+    <div class="stat"><b id="statReady">0</b><span>можна готувати • все є</span></div>
+    <div class="stat"><b id="statAvg">~25 хв</b><span>середній час добірки</span></div>
+    <div class="stat"><b id="statCooked">0</b><span>вже приготовано ✓</span></div>
+  </div>
+</section>
+
+<div class="marquee"><div class="marquee-track" id="marquee"></div></div>
+
+<!-- HOW -->
+<section class="how" id="how">
+  <div class="how-card"><span>01</span><h3>Введи або надиктуй</h3><p>Пиши що є або тисни мікрофон. Поле «Не хочу» прибере нелюбове — наприклад цибулю.</p></div>
+  <div class="how-card"><span>02</span><h3>Обери рецепт</h3><p>Сортуємо за % збігу. Зелений бейдж — можна готувати вже зараз.</p></div>
+  <div class="how-card"><span>03</span><h3>Готуй як шеф</h3><p>Кроки з чекбоксами, режим готування на весь екран, таймер, друк і список покупок.</p></div>
+</section>
+
+<!-- RECENT -->
+<section class="recent" id="recentSection" hidden>
+  <div class="recent-head"><h2>Нещодавно відкриті</h2><button class="btn ghost sm" id="recentClear">Прибрати</button></div>
+  <div class="recent-row" id="recentRow"></div>
+</section>
+
+<!-- FILTERS + GRID -->
+<section class="catalog" id="grid-section">
+  <div class="filters">
+    <div class="frow">
+      <input id="q" type="text" placeholder="🔍 Пошук страви… (борщ, паста)">
+      <select id="cat">
+        <option value="">Всі категорії</option>
+        <option>сніданки</option><option>перші страви</option><option>основні</option>
+        <option>паста</option><option>салати</option><option>десерти</option>
+      </select>
+      <select id="diet">
+        <option value="">Будь-яка дієта</option>
+        <option value="вегетаріанське">Вегетаріанське</option>
+        <option value="веганське">Веганське</option>
+        <option value="без лактози">Без лактози</option>
+      </select>
+      <select id="maxTime">
+        <option value="">Будь-який час</option>
+        <option value="15">до 15 хв</option>
+        <option value="30">до 30 хв</option>
+        <option value="45">до 45 хв</option>
+        <option value="60">до 60 хв</option>
+      </select>
+      <select id="sort">
+        <option value="match">Спочатку збіг</option>
+        <option value="missing">Найменше докупити</option>
+        <option value="time">Найшвидші</option>
+        <option value="kcal">Найлегші</option>
+      </select>
+    </div>
+    <div class="quick" id="quickRow" role="group" aria-label="Швидкі фільтри">
+      <button data-qf="fast15">⚡ до 15 хв</button>
+      <button data-qf="fast30">⏱ до 30 хв</button>
+      <button data-qf="veg">🥬 вегетаріанське</button>
+      <button data-qf="possible">✅ все є</button>
+      <button data-qf="soup">🍲 перші страви</button>
+      <button data-qf="sweet">🍰 десерти</button>
+    </div>
+    <div class="frow second">
+      <label class="check"><input type="checkbox" id="onlyFav"> Тільки улюблене ♡</label>
+      <label class="check"><input type="checkbox" id="onlyPossible"> Тільки «все є» ✓</label>
+      <button class="btn ghost sm" id="weekBtn">📅 Меню на тиждень</button>
+      <button class="btn ghost sm" id="clearAll">Очистити все ✕</button>
+      <span class="hint" id="activeHint"></span>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>
+    <div class="empty-emoji">🍳</div>
+    <h3>Нічого не знайдено</h3>
+    <p>Спробуй прибрати фільтри або додати менше продуктів.</p>
+    <button class="btn primary" id="emptyReset">Скинути фільтри</button>
+  </div>
+</section>
+
+<footer class="footer">
+  <div><b>🧊 HOLODYLNYK v4</b><p>40 рецептів • працює офлайн • <kbd>/</kbd> — пошук • <button class="linkbtn" id="selfTestBtn">перевірка даних</button>.</p></div>
+  <div class="foot-links"><span>борщ • сирники • деруни • вареники • шакшука • рамен • медовик</span></div>
+</footer>
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" id="modal">
+    <button class="modal-x" id="modalX">✕</button>
+    <div class="modal-hero"><img id="mImg" alt=""><div class="modal-hero-grad"></div>
+      <div class="modal-title"><h2 id="mTitle"></h2><p id="mMeta"></p></div>
+      <div class="modal-tools">
+        <button class="btn ghost sm" id="modalFav">♡ В улюблене</button>
+        <button class="btn ghost sm" id="cookBtn">👨‍🍳 Режим готування</button>
+        <button class="btn ghost sm" id="shareBtn">↗ Поділитись</button>
+        <button class="btn ghost sm" id="copyRecipeBtn">⧉ Копіювати рецепт</button>
+        <button class="btn ghost sm" id="printBtn">🖨 Друк</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="m-grid">
+        <div>
+          <div class="m-match" id="mMatch"></div>
+          <div class="rate-row" id="rateRow" title="Оціни рецепт"></div>
+          <h4>Інгредієнти <span class="portions">× <button id="minus">−</button><b id="portionVal">2</b><button id="plus">+</button> порції</span></h4>
+          <p class="ings-hint">Підказка: тисни ○ на відсутній інгредієнт — додасться в «мої продукти».</p>
+          <ul class="m-ings" id="mIngs"></ul>
+          <button class="btn ghost sm" id="toListBtn">+ Додати відсутнє в список покупок</button>
+          <button class="btn primary sm" id="cookedBtn">✓ Я приготував!</button>
+          <h4 style="margin-top:22px">Кроки <span id="stepProg" class="step-prog"></span></h4>
+          <div class="progress"><i id="progBar"></i></div>
+          <ol class="m-steps" id="mSteps"></ol>
+        </div>
+        <aside class="m-side">
+          <div class="timer-card">
+            <h4>⏱ Таймер</h4>
+            <div class="timer-digits" id="timerDigits">10:00</div>
+            <div class="timer-row">
+              <button data-t="5">5</button><button data-t="10" class="on">10</button><button data-t="15">15</button><button data-t="20">20</button>
+            </div>
+            <div class="timer-row">
+              <button class="btn primary sm" id="timerStart">Старт</button>
+              <button class="btn ghost sm" id="timerReset">Скинути</button>
+            </div>
+          </div>
+          <div class="side-card" id="mSideInfo"></div>
+          <div class="side-card" id="mAutoTimers"><b>⏱ Таймери з кроків</b><div class="timer-chips" id="autoTimers"></div></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER shopping list -->
+<div class="drawer-wrap" id="drawerWrap" hidden>
+  <div class="drawer-bg" id="drawerBg"></div>
+  <aside class="drawer">
+    <div class="drawer-head"><h3>🧾 Список покупок</h3><button class="modal-x" id="drawerX">✕</button></div>
+    <ul class="drawer-list" id="drawerList"></ul>
+    <div class="drawer-foot">
+      <button class="btn ghost sm" id="copyList">Копіювати</button>
+      <button class="btn ghost sm" id="shareTg">Telegram</button>
+      <button class="btn ghost sm" id="clearList">Очистити</button>
+    </div>
+  </aside>
+</div>
+
+<!-- WEEK PLANNER -->
+<div class="overlay" id="weekOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Меню на тиждень">
+    <button class="modal-x" id="weekX" style="top:16px;right:16px">✕</button>
+    <div class="modal-body" style="padding-top:54px">
+      <h2 style="font-family:var(--font-d);font-size:22px;margin-bottom:6px">📅 Меню на тиждень</h2>
+      <p class="week-sub" id="weekSub">7 різних страв з урахуванням фільтрів і «не хочу».</p>
+      <ol class="week-list" id="weekList"></ol>
+      <div class="week-foot">
+        <button class="btn primary sm" id="weekRegen">↻ Згенерувати знову</button>
+        <button class="btn ghost sm" id="weekToShop">+ Все відсутнє в список покупок</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COOK MODE -->
+<div class="cook" id="cookOverlay" hidden>
+  <div class="cook-top"><span id="cookCount">1 / 5</span><h3 id="cookTitle"></h3><button class="modal-x static" id="cookX">✕</button></div>
+  <div class="cook-step" id="cookStep"></div>
+  <div class="cook-bar"><div class="progress"><i id="cookProg"></i></div></div>
+  <div class="cook-nav">
+    <button class="btn ghost" id="cookPrev">← Назад</button>
+    <button class="btn primary" id="cookNext">Далі →</button>
+    <button class="btn ghost" id="cookDone">Готово ✓</button>
+  </div>
+  <p class="cook-hint">Працює з клавіатури: ← → • Esc — вийти</p>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+<button class="scrolltop" id="scrollTop" aria-label="Догори">↑</button>
+
+<script src="js/recipes.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
