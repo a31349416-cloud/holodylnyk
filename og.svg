@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ff7a18" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#ff7a18" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ice" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffc93c"/>
+      <stop offset=".55" stop-color="#ff7a18"/>
+      <stop offset="1" stop-color="#ff3d00"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0f0d0b"/>
+  <circle cx="980" cy="180" r="330" fill="url(#glow)"/>
+  <circle cx="140" cy="540" r="240" fill="url(#glow)" opacity=".6"/>
+  <g transform="rotate(-12 990 330)">
+    <rect x="900" y="240" width="180" height="180" rx="40" fill="url(#ice)"/>
+    <rect x="936" y="276" width="52" height="52" rx="12" fill="#ffffff" opacity=".55"/>
+  </g>
+  <text x="80" y="250" font-family="Noto Sans, sans-serif" font-weight="800" font-size="96" fill="#fff7e8" letter-spacing="4">HOLODYLNYK</text>
+  <text x="84" y="340" font-family="Noto Sans, sans-serif" font-weight="700" font-size="52" fill="#ffc93c">Що приготувати з того, що є?</text>
+  <text x="84" y="420" font-family="Noto Sans, sans-serif" font-weight="400" font-size="36" fill="#c8b9a3">100+ рецептів • таймер • список покупок • офлайн</text>
+</svg>
