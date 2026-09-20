@@ -441,15 +441,44 @@ $("#rateRow").addEventListener("click",e=>{
   renderRateRow(); render();
 });
 
-// cooked counter + confetti
+// cooked counter + history + confetti
 function getCooked(){ try{const v=JSON.parse(localStorage.getItem("hol_cooked")||"[]");return Array.isArray(v)?v:[]}catch{return[]} }
+function getCookDates(){ try{const v=JSON.parse(localStorage.getItem("hol_cooked_dates")||"[]");return Array.isArray(v)?v:[]}catch{return[]} }
+function dayStr(d){ return d.toISOString().slice(0,10); }
+function streak(days){
+  const set=new Set(days); let s=0; const d=new Date();
+  if(!set.has(dayStr(d))) d.setDate(d.getDate()-1);
+  while(set.has(dayStr(d))){ s++; d.setDate(d.getDate()-1); }
+  return s;
+}
 $("#cookedBtn").onclick=()=>{
   if(!currentRecipe) return;
   const c=getCooked(); c.push(currentRecipe.id);
   try{localStorage.setItem("hol_cooked",JSON.stringify(c))}catch{}
+  const dt=getCookDates(); dt.push(dayStr(new Date()));
+  try{localStorage.setItem("hol_cooked_dates",JSON.stringify(dt))}catch{}
   try{$("#statCooked").textContent=c.length;}catch{}
+  renderKitchen();
   confetti(); toast("Так тримати! Записано у приготовані");
 };
+function renderKitchen(){
+  const c=getCooked(), dt=getCookDates(), sec=$("#kitchenSection");
+  if(!c.length){ sec.hidden=true; return; }
+  sec.hidden=false;
+  $("#kitchenStats").innerHTML=
+    `<div><b>${c.length}</b>приготовано страв</div>`+
+    `<div><b>${streak(dt)}🔥</b>днів поспіль</div>`+
+    `<div><b>${new Set(c).size}</b>різних рецептів</div>`+
+    `<div><b>${favs.size}</b>в улюбленому</div>`;
+  const items=c.slice(-8).reverse().map((id,i)=>{
+    const r=window.RECIPES.find(x=>x.id===id); if(!r) return "";
+    const d=dt[dt.length-1-i]||"";
+    return `<div class="recent-item" data-id="${r.id}"><img loading="lazy" decoding="async" src="${r.img}" alt="${esc(r.title)}" onerror="this.src='https://picsum.photos/seed/${r.id}/400/200'"><span>${esc(r.title)}<br><span class="kitchen-date">${esc(d)}</span></span></div>`;
+  }).join("");
+  $("#kitchenList").innerHTML=items;
+}
+$("#kitchenList").addEventListener("click",e=>{ const c=e.target.closest("[data-id]"); if(c) openModal(c.dataset.id); });
+$("#kitchenClear").onclick=()=>{ try{localStorage.setItem("hol_cooked","[]");localStorage.setItem("hol_cooked_dates","[]")}catch{} try{$("#statCooked").textContent=0}catch{} renderKitchen(); };
 function confetti(){
   const em=["🎉","⭐","🔥","👏","😋"];
   for(let i=0;i<24;i++){
@@ -629,4 +658,4 @@ function openDeep(){
 window.addEventListener("hashchange",openDeep);
 
 // init
-renderChips();renderExcl();render();renderDrawer();renderRecent();openDeep();
+renderChips();renderExcl();render();renderDrawer();renderRecent();renderKitchen();openDeep();
