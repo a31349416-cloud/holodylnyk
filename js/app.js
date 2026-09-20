@@ -433,6 +433,28 @@ function renderWeek(){
 }
 $("#weekBtn").onclick=()=>{ weekPlan=genWeek(); renderWeek(); $("#weekOverlay").hidden=false; document.body.style.overflow="hidden"; };
 $("#weekRegen").onclick=()=>{ weekPlan=genWeek(); renderWeek(); };
+function pickCat(cat){
+  const pool=poolFiltered().filter(r=>r.cat===cat);
+  if(!pool.length) return null;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+$("#dayBtn").onclick=()=>{
+  const plan=[
+    {day:"Сніданок",pick:pickCat("сніданки")},
+    {day:"Обід",pick:pickCat("основні")||pickCat("паста")||pickCat("перші страви")},
+    {day:"Вечеря",pick:pickCat("салати")||pickCat("десерти")||pickCat("основні")},
+  ].filter(x=>x.pick).map(x=>({day:x.day,...x.pick,_s:score(x.pick)}));
+  if(!plan.length){ toast("Немає рецептів під фільтри"); return; }
+  weekPlan=plan; renderWeek();
+};
+function weekText(){
+  return weekPlan.map(w=>`${w.day} — ${w.title} (${w.time} хв)`).join("\n");
+}
+$("#copyWeekBtn").onclick=async ()=>{
+  if(!weekPlan.length){ toast("Спочатку згенеруй меню"); return; }
+  try{ await navigator.clipboard.writeText("Моє меню (HOLODYLNYK):\n"+weekText()); toast("Меню скопійовано"); }
+  catch{ toast("Не вдалось скопіювати"); }
+};
 $("#weekX").onclick=()=>{ $("#weekOverlay").hidden=true; if($("#overlay").hidden) document.body.style.overflow=""; };
 $("#weekOverlay").addEventListener("click",e=>{ if(e.target.id==="weekOverlay") $("#weekX").click(); });
 $("#weekList").addEventListener("click",e=>{ const li=e.target.closest("li[data-id]"); if(!li) return; $("#weekX").click(); openModal(li.dataset.id); });
