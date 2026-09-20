@@ -66,6 +66,10 @@ function safeParse(key, fb){
   try { const v = JSON.parse(localStorage.getItem(key) ?? JSON.stringify(fb)); return Array.isArray(v) ? v : fb; }
   catch { return fb; }
 }
+function debounce(fn, ms){
+  let t=null;
+  return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); };
+}
 
 const selected = new Set(safeParse("hol_ings", []));
 const favs = new Set(safeParse("hol_favs", []));
@@ -370,7 +374,8 @@ function toggleFav(id){
   render();
 }
 ["q","cat","diet","maxTime","maxKcal","level","sort","onlyFav","onlyPossible","staples"].forEach(id=>{
-  $("#"+id).addEventListener("input",()=>{persistFilters();render();});
+  const h=()=>{persistFilters();render();};
+  $("#"+id).addEventListener("input",id==="q"?debounce(h,180):h);
 });
 $("#unhideBtn").onclick=()=>{ hidden.clear(); saveHidden(); render(); };
 $("#clearAll").onclick=()=>{selected.clear();excluded.clear();onlyMine=false;onlySeason=false;onlyCooked=false;$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#maxKcal").value="";$("#level").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;$("#staples").checked=true;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
