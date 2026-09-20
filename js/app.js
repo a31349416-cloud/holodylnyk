@@ -18,6 +18,11 @@ function ingMatch(a, b){
   const sa=stem(a), sb=stem(b);
   return sa.length>2&&sb.length>2&&(sa.includes(sb)||sb.includes(sa));
 }
+// responsive image helper (Unsplash w= param)
+function srcSet(url){
+  if(!/images\.unsplash\.com/.test(url||"")) return "";
+  return `srcset="${url.replace("w=900","w=400")} 400w, ${url} 800w" sizes="(max-width:600px) 90vw, 320px"`;
+}
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function safeParse(key, fb){
   try { const v = JSON.parse(localStorage.getItem(key) ?? JSON.stringify(fb)); return Array.isArray(v) ? v : fb; }
@@ -174,7 +179,7 @@ function render(){
   grid.innerHTML=items.map(r=>`
     <article class="card" data-id="${r.id}" tabindex="0" aria-label="${esc(r.title)}">
       <div class="card-img">
-        <img loading="lazy" decoding="async" src="${r.img}" alt="${esc(r.title)}" onerror="this.src='https://picsum.photos/seed/${r.id}/800/600'">
+        <img loading="lazy" decoding="async" src="${r.img}" ${srcSet(r.img)} alt="${esc(r.title)}" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${r.id}/800/600'">
         ${badge(r._s.pct)}
         <button class="fav ${favs.has(r.id)?'on':''}" data-fav="${r.id}" aria-label="В улюблене">${favs.has(r.id)?'♥':'♡'}</button>
       </div>
@@ -270,7 +275,10 @@ function openModal(id){
   const r=window.RECIPES.find(x=>x.id===id); if(!r) return;
   currentRecipe=r; portions=2; doneSteps=new Set();
   const s=score(r);
-  $("#mImg").src=r.img; $("#mImg").onerror=function(){this.src=`https://picsum.photos/seed/${r.id}/1000/600`};
+  $("#mImg").src=r.img;
+  const ss=srcSet(r.img); if(ss){ $("#mImg").setAttribute("srcset",ss.match(/srcset="([^"]+)"/)[1]); $("#mImg").setAttribute("sizes","(max-width:700px) 100vw, 900px"); }
+  else $("#mImg").removeAttribute("srcset");
+  $("#mImg").onerror=function(){this.removeAttribute("srcset");this.src=`https://picsum.photos/seed/${r.id}/1000/600`};
   $("#mTitle").textContent=r.title;
   $("#mMeta").textContent=`⏱ ${r.time} хв • ${r.kcal} ккал • ${r.level} • ${r.cat}`;
   $("#mMatch").textContent=selected.size?(s.pct>=70?`✅ ${s.pct}% — майже все є!`:`◐ Збіг ${s.pct}% — докупи: ${s.miss.slice(0,4).join(", ")||"нічого"}`):`☆ Відкрий рецепт і готуй`;
@@ -389,7 +397,7 @@ function renderRecent(){
   const r=getRecent().map(id=>window.RECIPES.find(x=>x.id===id)).filter(Boolean);
   const sec=$("#recentSection"); if(!r.length){sec.hidden=true;return;}
   sec.hidden=false;
-  $("#recentRow").innerHTML=r.map(x=>`<div class="recent-item" data-id="${x.id}"><img loading="lazy" src="${x.img}" alt="${esc(x.title)}" onerror="this.src='https://picsum.photos/seed/${x.id}/400/200'"><span>${esc(x.title)}</span></div>`).join("");
+  $("#recentRow").innerHTML=r.map(x=>`<div class="recent-item" data-id="${x.id}"><img loading="lazy" decoding="async" src="${x.img}" ${srcSet(x.img)} alt="${esc(x.title)}" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${x.id}/400/200'"><span>${esc(x.title)}</span></div>`).join("");
 }
 $("#recentRow").addEventListener("click",e=>{ const c=e.target.closest("[data-id]"); if(c) openModal(c.dataset.id); });
 $("#recentClear").onclick=()=>{ try{localStorage.setItem("hol_recent","[]")}catch{} renderRecent(); };
@@ -413,7 +421,7 @@ function genWeek(){
   return out;
 }
 function renderWeek(){
-  $("#weekList").innerHTML=weekPlan.map(w=>`<li data-id="${w.id}"><img loading="lazy" src="${w.img}" alt="" onerror="this.src='https://picsum.photos/seed/${w.id}/200/200'"><div><b>${w.day} — ${esc(w.title)}</b><small>⏱ ${w.time} хв • ${w.kcal} ккал • збіг ${w._s.pct}%</small></div><span>→</span></li>`).join("")||`<li>Немає рецептів під фільтри — скинь їх.</li>`;
+  $("#weekList").innerHTML=weekPlan.map(w=>`<li data-id="${w.id}"><img loading="lazy" decoding="async" src="${w.img}" ${srcSet(w.img)} alt="" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${w.id}/200/200'"><div><b>${w.day} — ${esc(w.title)}</b><small>⏱ ${w.time} хв • ${w.kcal} ккал • збіг ${w._s.pct}%</small></div><span>→</span></li>`).join("")||`<li>Немає рецептів під фільтри — скинь їх.</li>`;
   const all=[...new Set(weekPlan.flatMap(w=>score(w).miss))];
   $("#weekSub").textContent=weekPlan.length?`7 страв • разом докупити: ${all.length?all.join(", "):"нічого — все є"}`:"";
 }
@@ -488,7 +496,7 @@ function renderKitchen(){
   const items=c.slice(-8).reverse().map((id,i)=>{
     const r=window.RECIPES.find(x=>x.id===id); if(!r) return "";
     const d=dt[dt.length-1-i]||"";
-    return `<div class="recent-item" data-id="${r.id}"><img loading="lazy" decoding="async" src="${r.img}" alt="${esc(r.title)}" onerror="this.src='https://picsum.photos/seed/${r.id}/400/200'"><span>${esc(r.title)}<br><span class="kitchen-date">${esc(d)}</span></span></div>`;
+    return `<div class="recent-item" data-id="${r.id}"><img loading="lazy" decoding="async" src="${r.img}" ${srcSet(r.img)} alt="${esc(r.title)}" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${r.id}/400/200'"><span>${esc(r.title)}<br><span class="kitchen-date">${esc(d)}</span></span></div>`;
   }).join("");
   $("#kitchenList").innerHTML=items;
 }
