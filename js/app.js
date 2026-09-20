@@ -591,7 +591,8 @@ function genWeek(){
 function renderWeek(){
   $("#weekList").innerHTML=weekPlan.map(w=>`<li data-id="${w.id}"><img loading="lazy" decoding="async" src="${w.img}" ${imgAttr(w.img)} alt="" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${w.id}/200/200'"><div><b>${w.day} — ${esc(w.title)}</b><small>⏱ ${fmtDur(w.time)} • ${w.kcal} ккал • збіг ${w._s.pct}%</small></div><span>→</span></li>`).join("")||`<li>Немає рецептів під фільтри — скинь їх.</li>`;
   const all=[...new Set(weekPlan.flatMap(w=>score(w).miss))];
-  $("#weekSub").textContent=weekPlan.length?`7 страв • разом докупити: ${all.length?all.join(", "):"нічого — все є"}`:"";
+  const total=weekPlan.reduce((a,w)=>a+w.time,0);
+  $("#weekSub").textContent=weekPlan.length?`${weekPlan.length} страв • разом ${fmtDur(total)} готування • докупити: ${all.length?all.join(", "):"нічого — все є"}`:"";
 }
 $("#weekBtn").onclick=()=>{ weekPlan=genWeek(); renderWeek(); $("#weekOverlay").hidden=false; document.body.style.overflow="hidden"; };
 $("#weekRegen").onclick=()=>{ weekPlan=genWeek(); renderWeek(); };
@@ -733,7 +734,7 @@ $("#fSave").onclick=()=>{
   const c=getCustom(); c.push(rec); saveCustom(c);
   ["fTitle","fDesc","fImg","fIngs","fSteps"].forEach(i=>$("#"+i).value="");
   document.querySelectorAll(".fDiet:checked").forEach(x=>x.checked=false);
-  closeAdd(); refreshCounts(); render();
+  closeAdd(); refreshCounts(); render(); renderDishDay();
   toast("Рецепт збережено");
   openModal(id);
 };
@@ -741,7 +742,7 @@ $("#customDel").onclick=()=>{
   if(!currentRecipe||!isOwn(currentRecipe)) return;
   if(!confirm(`Видалити «${currentRecipe.title}»?`)) return;
   saveCustom(getCustom().filter(x=>x.id!==currentRecipe.id));
-  closeModal(); refreshCounts(); render();
+  closeModal(); refreshCounts(); render(); renderDishDay();
   toast("Видалено");
 };
 
