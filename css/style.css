@@ -39,6 +39,8 @@ main,.nav{position:relative;z-index:2}
 .nav-links a{color:var(--mut);text-decoration:none;font-weight:600;font-size:14px}
 .nav-links a:hover{color:#fff}
 .nav-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.netdot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.netdot.off{background:#e33;box-shadow:0 0 8px #e33}
 .btn{border:0;cursor:pointer;font-family:var(--font-b);font-weight:800;border-radius:100px;transition:.2s}
 .btn.primary{background:linear-gradient(135deg,var(--acc),#ff3d00);color:#fff;padding:12px 20px;font-size:14px;box-shadow:0 8px 30px rgba(255,90,0,.35)}
 .btn.primary:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(255,90,0,.5)}

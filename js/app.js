@@ -695,8 +695,19 @@ document.addEventListener("scroll",()=>{
   $("#scrollTop").classList.toggle("show",window.scrollY>700);
 },{passive:true});
 $("#scrollTop").onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
-window.addEventListener("offline",()=>toast("Офлайн — показуємо збережене"));
-window.addEventListener("online",()=>toast("Знову онлайн"));
+window.addEventListener("offline",()=>{ $("#netDot").classList.add("off"); toast("Офлайн — показуємо збережене"); });
+window.addEventListener("online",()=>{ $("#netDot").classList.remove("off"); toast("Знову онлайн"); });
+if(!navigator.onLine) $("#netDot").classList.add("off");
+// PWA install
+let deferredPrompt=null;
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault(); deferredPrompt=e; $("#installBtn").hidden=false;
+});
+$("#installBtn").onclick=async ()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt(); await deferredPrompt.userChoice;
+  deferredPrompt=null; $("#installBtn").hidden=true;
+};
 
 // backup / restore / wipe
 const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen"];
