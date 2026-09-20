@@ -784,7 +784,7 @@ $("#installBtn").onclick=async ()=>{
 };
 
 // backup / restore / wipe
-const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen"];
+const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen","hol_custom"];
 $("#backupBtn").onclick=()=>{
   const data={};
   HOL_KEYS.forEach(k=>{ try{data[k]=JSON.parse(localStorage.getItem(k)??"null")}catch{data[k]=null} });
@@ -810,22 +810,25 @@ $("#wipeBtn").onclick=()=>{
   location.reload();
 };
 // self-test даних
+function checkRecipe(r, tag, bad, ids, cats, diets){
+  if(!r.id||ids.has(r.id)) bad.push(`${tag} дубль/пустий id`);
+  ids.add(r.id);
+  ["title","desc","img","time","kcal","level","cat"].forEach(f=>{ if(!r[f]) bad.push(`${tag}${r.id}: пусте ${f}`); });
+  if(!cats.has(r.cat)) bad.push(`${tag}${r.id}: погана категорія ${r.cat}`);
+  (r.diet||[]).forEach(d=>{ if(!diets.has(d)) bad.push(`${tag}${r.id}: погана дієта ${d}`); });
+  if(!Array.isArray(r.ings)||r.ings.length<2) bad.push(`${tag}${r.id}: мало інгредієнтів`);
+  if(!Array.isArray(r.steps)||r.steps.length<2) bad.push(`${tag}${r.id}: мало кроків`);
+  if(!(r.time>0)||!(r.kcal>0)) bad.push(`${tag}${r.id}: час/ккал`);
+  if(!/^https:\/\//.test(r.img||"")) bad.push(`${tag}${r.id}: не https картинка`);
+}
 $("#selfTestBtn").onclick=()=>{
   const bad=[];
   const ids=new Set(), cats=new Set(["сніданки","перші страви","основні","паста","салати","десерти"]);
   const diets=new Set(["вегетаріанське","веганське","без лактози"]);
-  window.RECIPES.forEach((r,i)=>{
-    if(!r.id||ids.has(r.id)) bad.push(`#${i} дубль/пустий id`);
-    ids.add(r.id);
-    ["title","desc","img","time","kcal","level","cat"].forEach(f=>{ if(!r[f]) bad.push(`${r.id}: пусте ${f}`); });
-    if(!cats.has(r.cat)) bad.push(`${r.id}: погана категорія ${r.cat}`);
-    (r.diet||[]).forEach(d=>{ if(!diets.has(d)) bad.push(`${r.id}: погана дієта ${d}`); });
-    if(!Array.isArray(r.ings)||r.ings.length<2) bad.push(`${r.id}: мало інгредієнтів`);
-    if(!Array.isArray(r.steps)||r.steps.length<2) bad.push(`${r.id}: мало кроків`);
-    if(!(r.time>0)||!(r.kcal>0)) bad.push(`${r.id}: час/ккал`);
-    if(!/^https:\/\//.test(r.img)) bad.push(`${r.id}: не https картинка`);
-  });
-  toast(bad.length?`Знайдено проблем: ${bad.length} (${bad[0]})`:`Все чисто: ${ids.size} рецептів OK`);
+  window.RECIPES.forEach((r,i)=>checkRecipe(r,`#${i} `,bad,ids,cats,diets));
+  getCustom().forEach((r,i)=>checkRecipe(r,"моє ",bad,ids,cats,diets));
+  const total=window.RECIPES.length+getCustom().length;
+  toast(bad.length?`Знайдено проблем: ${bad.length} (${bad[0]})`:`Все чисто: ${total} рецептів OK`);
 };
 
 function toast(msg){
