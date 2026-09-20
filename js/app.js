@@ -49,6 +49,7 @@ function scaleAmount(a, portions){
   return `${num} ${m[2]}`.trim();
 }
 let currentRecipe = null, portions = 2, timerSec = 600, timerId = null, timerLeft = 600, doneSteps = new Set(), cookIdx = 0;
+let lastItems = [];
 
 // theme
 function applyTheme(t){
@@ -193,6 +194,7 @@ function render(){
   const exclTxt=excluded.size?` • без: ${[...excluded].join(", ")}`:"";
   $("#activeHint").textContent=(selected.size?`Продукти: ${[...selected].join(", ")}`:"Додай продукти — відсортуємо за збігом")+exclTxt;
   $("#empty").hidden=items.length>0;
+  lastItems=items;
   grid.innerHTML=items.map(r=>`
     <article class="card" data-id="${r.id}" tabindex="0" aria-label="${esc(r.title)}">
       <div class="card-img">
@@ -283,11 +285,19 @@ $("#emptyFast").onclick=()=>{ $("#clearAll").click(); $("#maxTime").value="30"; 
 $("#emptyTop").onclick=()=>{ $("#clearAll").click(); $("#sort").value="rate"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
 $("#favToggle").onclick=()=>{const c=$("#onlyFav");c.checked=!c.checked;render();document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"});};
 
-// random
+// random (respects current filters)
 $("#randomBtn").onclick=()=>{
-  const pool=window.RECIPES; const r=pool[Math.floor(Math.random()*pool.length)];
-  openModal(r.id); toast("Шеф обрав за тебе 🎲");
+  const pool=lastItems.length?lastItems:window.RECIPES;
+  const r=pool[Math.floor(Math.random()*pool.length)];
+  openModal(r.id); toast(pool===lastItems?`Шеф обрав з ${pool.length} під фільтри`:"Шеф обрав за тебе");
 };
+function download(name, text){
+  try{
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([text],{type:"text/plain;charset=utf-8"}));
+    a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  }catch{ toast("Не вдалось зберегти файл"); }
+}
 
 // modal
 function openModal(id){
@@ -620,6 +630,17 @@ $("#copyList").onclick=async ()=>{
   const text="Список покупок:\n- "+shopText().join("\n- ");
   try { await navigator.clipboard.writeText(text); toast("Скопійовано в буфер"); }
   catch { toast("Не вдалось скопіювати"); }
+};
+$("#dlList").onclick=()=>{
+  if(!shopList.length){ toast("Список порожній"); return; }
+  download("spysok-pokupok.txt","Список покупок (HOLODYLNYK):\n- "+shopText().join("\n- ")+"\n");
+  toast("Файл збережено");
+};
+$("#dlWeek").onclick=()=>{
+  if(!weekPlan.length){ toast("Спочатку згенеруй меню"); return; }
+  const all=[...new Set(weekPlan.flatMap(w=>score(w).miss))];
+  download("menu-tyzhden.txt",`Моє меню (HOLODYLNYK):\n${weekText()}\n\nДокупити:\n- ${all.join("\n- ")||"нічого"}\n`);
+  toast("Файл збережено");
 };
 $("#shareTg").onclick=()=>{
   const text=encodeURIComponent("Мій список покупок (HOLODYLNYK):\n- "+shopText().join("\n- "));
