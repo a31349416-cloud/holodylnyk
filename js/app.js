@@ -82,7 +82,7 @@ function scaleAmount(a, portions){
 }
 let currentRecipe = null, portions = 2, timerSec = 600, timerId = null, timerLeft = 600, doneSteps = new Set(), cookIdx = 0;
 let lastItems = [];
-let onlyMine = false, onlySeason = false;
+let onlyMine = false, onlySeason = false, onlyCooked = false;
 // seasons: autumn (Sep–Nov), winter (Dec–Feb)
 const SEASON_IDS = ["pumpkin-soup","pumpkin-porridge","mushroom-soup","mushroom-yushka","apple-pie","medovyk","uzvar","cottage-casserole","kysil","banosh"];
 const WINTER_IDS = ["uzvar","kutia","holodets","medovyk","cheesecake-no-bake","syrnyky","roast-chicken","solyanka"];
@@ -232,12 +232,13 @@ function dietBadges(r){
 
 function render(){
   const q=norm($("#q").value), cat=$("#cat").value, diet=$("#diet").value,
-        mt=$("#maxTime").value, mk=$("#maxKcal").value, sort=$("#sort").value, onlyFav=$("#onlyFav").checked;
+        mt=$("#maxTime").value, mk=$("#maxKcal").value, lv=$("#level").value, sort=$("#sort").value, onlyFav=$("#onlyFav").checked;
   const onlyPoss=$("#onlyPossible").checked;
   let items=allRecipes().map(r=>({...r,_s:score(r)}));
   if(onlyFav) items=items.filter(r=>favs.has(r.id));
   if(onlyPoss) items=items.filter(r=>r._s.pct===100);
   if(onlyMine) items=items.filter(r=>isOwn(r));
+  if(onlyCooked) items=items.filter(r=>getCooked().includes(r.id));
   if(onlySeason) items=items.filter(r=>isSeason(r));
   if(excluded.size) items=items.filter(r=>!isExcluded(r));
   if(q) items=items.filter(r=>fuzzyHay(r.title+" "+r.desc+" "+r.ings.map(i=>i.n).join(" "),q));
@@ -245,6 +246,7 @@ function render(){
   if(diet) items=items.filter(r=>r.diet.includes(diet));
   if(mt) items=items.filter(r=>r.time<=+mt);
   if(mk) items=items.filter(r=>r.kcal<=+mk);
+  if(lv) items=items.filter(r=>r.level===lv);
   items.sort((a,b)=>{
     if(sort==="time") return a.time-b.time;
     if(sort==="kcal") return a.kcal-b.kcal;
@@ -313,6 +315,7 @@ $("#quickRow").addEventListener("click",e=>{
   if(k==="sweet"){ $("#cat").value=on?"десерти":""; }
   if(k==="season"){ onlySeason=on; }
   if(k==="mine"){ onlyMine=on; }
+  if(k==="cooked"){ onlyCooked=on; }
   persistFilters(); render();
 });
 grid.addEventListener("click",e=>{
@@ -342,10 +345,10 @@ function hl(text,q){
 }
 // category counts
 function updateCatCounts(){
-  const q=norm($("#q").value), diet=$("#diet").value, mt=$("#maxTime").value, mk=$("#maxKcal").value;
+  const q=norm($("#q").value), diet=$("#diet").value, mt=$("#maxTime").value, mk=$("#maxKcal").value, lv=$("#level").value;
   const base=allRecipes().filter(r=>
     (!q||(r.title+" "+r.desc).toLowerCase().includes(q))&&
-    (!diet||r.diet.includes(diet))&&(!mt||r.time<=+mt)&&(!mk||r.kcal<=+mk)&&!isExcluded(r));
+    (!diet||r.diet.includes(diet))&&(!mt||r.time<=+mt)&&(!mk||r.kcal<=+mk)&&(!lv||r.level===lv)&&!isExcluded(r));
   const cats=["","сніданки","перші страви","основні","паста","салати","десерти"];
   const sel=$("#cat").value;
   $("#cat").innerHTML=cats.map(c=>{
@@ -359,10 +362,10 @@ function toggleFav(id){
   try { localStorage.setItem("hol_favs",JSON.stringify([...favs])); } catch {}
   render();
 }
-["q","cat","diet","maxTime","maxKcal","sort","onlyFav","onlyPossible","staples"].forEach(id=>{
+["q","cat","diet","maxTime","maxKcal","level","sort","onlyFav","onlyPossible","staples"].forEach(id=>{
   $("#"+id).addEventListener("input",()=>{persistFilters();render();});
 });
-$("#clearAll").onclick=()=>{selected.clear();excluded.clear();onlyMine=false;onlySeason=false;$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#maxKcal").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;$("#staples").checked=true;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
+$("#clearAll").onclick=()=>{selected.clear();excluded.clear();onlyMine=false;onlySeason=false;onlyCooked=false;$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#maxKcal").value="";$("#level").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;$("#staples").checked=true;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
 $("#emptyReset").onclick=()=>$("#clearAll").click();
 $("#emptyFast").onclick=()=>{ $("#clearAll").click(); $("#maxTime").value="30"; $("#sort").value="time"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
 $("#emptyTop").onclick=()=>{ $("#clearAll").click(); $("#sort").value="rate"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
@@ -539,7 +542,8 @@ let weekPlan=[];
 function poolFiltered(){
   return allRecipes().filter(r=>!isExcluded(r))
     .filter(r=>!$("#cat").value||r.cat===$("#cat").value)
-    .filter(r=>!$("#diet").value||r.diet.includes($("#diet").value));
+    .filter(r=>!$("#diet").value||r.diet.includes($("#diet").value))
+    .filter(r=>!$("#level").value||r.level===$("#level").value);
 }
 function genWeek(){
   const pool=[...poolFiltered()]; if(!pool.length) return [];
@@ -912,7 +916,7 @@ const FKEY="hol_filters";
 function persistFilters(){
   try{localStorage.setItem(FKEY,JSON.stringify({
     q:$("#q").value,cat:$("#cat").value,diet:$("#diet").value,
-    maxTime:$("#maxTime").value,maxKcal:$("#maxKcal").value,sort:$("#sort").value,
+    maxTime:$("#maxTime").value,maxKcal:$("#maxKcal").value,level:$("#level").value,sort:$("#sort").value,
     onlyFav:$("#onlyFav").checked,onlyPossible:$("#onlyPossible").checked,
     staples:$("#staples").checked}));}catch{}
 }
@@ -920,7 +924,7 @@ try{
   const f=JSON.parse(localStorage.getItem(FKEY)||"{}");
   if(f.q)$("#q").value=f.q; if(f.cat)$("#cat").value=f.cat;
   if(f.diet)$("#diet").value=f.diet; if(f.maxTime)$("#maxTime").value=f.maxTime;
-  if(f.maxKcal)$("#maxKcal").value=f.maxKcal; if(f.sort)$("#sort").value=f.sort;
+  if(f.maxKcal)$("#maxKcal").value=f.maxKcal; if(f.level)$("#level").value=f.level; if(f.sort)$("#sort").value=f.sort;
   if(f.onlyFav)$("#onlyFav").checked=true; if(f.onlyPossible)$("#onlyPossible").checked=true;
   if(f.staples===false)$("#staples").checked=false;
 }catch{}
