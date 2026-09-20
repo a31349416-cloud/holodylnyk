@@ -151,6 +151,7 @@
       <label class="check"><input type="checkbox" id="onlyPossible"> Тільки «все є» ✓</label>
       <label class="check" title="Сіль, вода, олія і перець не потрапляють у «докупити»"><input type="checkbox" id="staples" checked> База завжди є 🧂</label>
       <button class="btn ghost sm" id="weekBtn">📅 Меню на тиждень</button>
+      <button class="btn primary sm" id="addRecipeBtn">＋ Свій рецепт</button>
       <button class="btn ghost sm" id="clearAll">Очистити все ✕</button>
       <span class="hint" id="activeHint"></span>
     </div>
@@ -187,6 +188,7 @@
         <button class="btn ghost sm" id="shareBtn">↗ Поділитись</button>
         <button class="btn ghost sm" id="copyRecipeBtn">⧉ Копіювати рецепт</button>
         <button class="btn ghost sm" id="printBtn">🖨 Друк</button>
+        <button class="btn ghost sm" id="customDel" hidden>🗑 Видалити моє</button>
       </div>
     </div>
     <div class="modal-body">
@@ -236,6 +238,33 @@
       <button class="btn ghost sm" id="clearList">Очистити</button>
     </div>
   </aside>
+</div>
+
+<!-- ADD RECIPE -->
+<div class="overlay" id="addOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Новий рецепт" style="max-width:640px">
+    <button class="modal-x" id="addX" style="top:16px;right:16px">✕</button>
+    <div class="modal-body" style="padding-top:54px">
+      <h2 style="font-family:var(--font-d);font-size:20px;margin-bottom:4px">＋ Свій рецепт</h2>
+      <p class="week-sub">Зберігається в цьому браузері. Потрапляє в пошук, меню і список покупок.</p>
+      <div class="form-grid">
+        <label>Назва*<input id="fTitle" maxlength="60" placeholder="Бабусин пиріг"></label>
+        <label>Опис<input id="fDesc" maxlength="140" placeholder="Чому це смачно"></label>
+        <label>Час (хв)<input id="fTime" type="number" min="5" max="480" value="30"></label>
+        <label>Ккал<input id="fKcal" type="number" min="10" max="2000" value="350"></label>
+        <label>Категорія<select id="fCat"><option>сніданки</option><option>перші страви</option><option>основні</option><option>паста</option><option>салати</option><option>десерти</option></select></label>
+        <label>Складність<select id="fLevel"><option>легкий</option><option>середній</option><option>складний</option></select></label>
+        <label class="wide">Дієта<span class="diet-pick"><label class="check"><input type="checkbox" class="fDiet" value="вегетаріанське"> вегетаріанське</label><label class="check"><input type="checkbox" class="fDiet" value="веганське"> веганське</label><label class="check"><input type="checkbox" class="fDiet" value="без лактози"> без лактози</label></span></label>
+        <label class="wide">Фото (URL, необов'язково)<input id="fImg" type="url" placeholder="https://…"></label>
+        <label class="wide">Інгредієнти* — по одному на рядок: назва — кількість<textarea id="fIngs" rows="4" placeholder="картопля — 4 шт&#10;яйця — 2 шт"></textarea></label>
+        <label class="wide">Кроки* — по одному на рядок<textarea id="fSteps" rows="5" placeholder="Відвари картоплю&#10;Додай яйця"></textarea></label>
+      </div>
+      <div class="week-foot">
+        <button class="btn primary sm" id="fSave">Зберегти рецепт</button>
+        <button class="btn ghost sm" id="fCancel">Скасувати</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- WEEK PLANNER -->

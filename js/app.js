@@ -62,10 +62,16 @@ function applyTheme(t){
 applyTheme(document.documentElement.dataset.theme||"dark");
 $("#themeToggle").onclick=()=>applyTheme(document.documentElement.dataset.theme==="light"?"dark":"light");
 
+// custom user recipes
+function getCustom(){ try{const v=JSON.parse(localStorage.getItem("hol_custom")||"[]");return Array.isArray(v)?v:[]}catch{return[]} }
+function saveCustom(c){ try{localStorage.setItem("hol_custom",JSON.stringify(c))}catch{} }
+function allRecipes(){ return [...window.RECIPES, ...getCustom()]; }
+function findRecipe(id){ return allRecipes().find(x=>x.id===id); }
+function isOwn(r){ return r&&String(r.id).startsWith("u-"); }
 // marquee + counts
 function refreshCounts(){
-  const n=window.RECIPES.length;
-  $("#heroBadge").textContent=`✦ ${n} перевірені рецепти • українською • без реєстрації`;
+  const n=allRecipes().length, own=getCustom().length;
+  $("#heroBadge").textContent=`✦ ${n} рецептів (${own} моїх) • українською • без реєстрації`;
   $("#marquee").innerHTML = Array(2).fill("БОРЩ ✦ СИРНИКИ ✦ ДЕРУНИ ✦ ВАРЕНИКИ ✦ ШАКШУКА ✦ ПАСТА ✦ ПЛОВ ✦ ШАРЛОТКА ✦ ЦЕЗАР ✦ РАМЕН ✦ МЕДОВИК ✦ БАНОШ ✦ СМУЗІ ✦ ").join("");
 }
 refreshCounts();
@@ -102,7 +108,7 @@ ingInput.addEventListener("keydown",e=>{ if(e.key==="Enter") addIng(ingInput.val
 ingInput.addEventListener("input",()=>{
   const v=norm(ingInput.value); const box=$("#suggest");
   if(v.length<2){box.innerHTML="";return;}
-  const all=[...new Set(window.RECIPES.flatMap(r=>r.ings.map(i=>i.n)))];
+  const all=[...new Set(allRecipes().flatMap(r=>r.ings.map(i=>i.n)))];
   const m=all.filter(a=>fuzzyHay(a,v)&&!selected.has(a)).slice(0,6);
   box.innerHTML=m.map(x=>`<button>${x}</button>`).join("");
 });
@@ -125,7 +131,7 @@ exclInput.addEventListener("keydown",e=>{ if(e.key==="Enter") addExcl(exclInput.
 exclInput.addEventListener("input",()=>{
   const v=norm(exclInput.value), box=$("#exclSuggest");
   if(v.length<2){box.innerHTML="";return;}
-  const all=[...new Set(window.RECIPES.flatMap(r=>r.ings.map(i=>i.n)))];
+  const all=[...new Set(allRecipes().flatMap(r=>r.ings.map(i=>i.n)))];
   box.innerHTML=all.filter(a=>fuzzyHay(a,v)&&![...excluded].some(x=>ingMatch(a,x))).slice(0,6).map(x=>`<button>${esc(x)}</button>`).join("");
 });
 $("#exclSuggest").addEventListener("click",e=>{
@@ -177,7 +183,7 @@ function render(){
   const q=norm($("#q").value), cat=$("#cat").value, diet=$("#diet").value,
         mt=$("#maxTime").value, mk=$("#maxKcal").value, sort=$("#sort").value, onlyFav=$("#onlyFav").checked;
   const onlyPoss=$("#onlyPossible").checked;
-  let items=window.RECIPES.map(r=>({...r,_s:score(r)}));
+  let items=allRecipes().map(r=>({...r,_s:score(r)}));
   if(onlyFav) items=items.filter(r=>favs.has(r.id));
   if(onlyPoss) items=items.filter(r=>r._s.pct===100);
   if(excluded.size) items=items.filter(r=>!isExcluded(r));
@@ -219,7 +225,7 @@ function render(){
       <div class="card-body">
         <h3>${hl(r.title,q)}</h3><p>${r.desc}</p>
         ${rateMini(r.id)}
-        <div class="meta"><span class="t">⏱ ${r.time} хв</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}</div>
+        <div class="meta"><span class="t">⏱ ${r.time} хв</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}${isOwn(r)?'<span class="own-tag">✎ моє</span>':""}</div>
         ${selected.size?`<div class="miss">${r._s.miss.length?`Докупити: <b>${r._s.miss.slice(0,3).join(", ")}${r._s.miss.length>3?"…":""}</b>`:"✅ Все є! Можна готувати"}</div>`:`<div class="miss">Натисни щоб відкрити рецепт →</div>`}
       </div>
     </article>`).join("");
@@ -274,7 +280,7 @@ function hl(text,q){
 // category counts
 function updateCatCounts(){
   const q=norm($("#q").value), diet=$("#diet").value, mt=$("#maxTime").value, mk=$("#maxKcal").value;
-  const base=window.RECIPES.filter(r=>
+  const base=allRecipes().filter(r=>
     (!q||(r.title+" "+r.desc).toLowerCase().includes(q))&&
     (!diet||r.diet.includes(diet))&&(!mt||r.time<=+mt)&&(!mk||r.kcal<=+mk)&&!isExcluded(r));
   const cats=["","сніданки","перші страви","основні","паста","салати","десерти"];
@@ -301,7 +307,7 @@ $("#favToggle").onclick=()=>{const c=$("#onlyFav");c.checked=!c.checked;render()
 
 // random (respects current filters)
 $("#randomBtn").onclick=()=>{
-  const pool=lastItems.length?lastItems:window.RECIPES;
+  const pool=lastItems.length?lastItems:allRecipes();
   const r=pool[Math.floor(Math.random()*pool.length)];
   openModal(r.id); toast(pool===lastItems?`Шеф обрав з ${pool.length} під фільтри`:"Шеф обрав за тебе");
 };
@@ -315,7 +321,7 @@ function download(name, text){
 
 // modal
 function openModal(id){
-  const r=window.RECIPES.find(x=>x.id===id); if(!r) return;
+  const r=findRecipe(id); if(!r) return;
   currentRecipe=r; portions=2; doneSteps=new Set();
   const s=score(r);
   $("#mImg").src=r.img;
@@ -329,6 +335,7 @@ function openModal(id){
   $("#mSideInfo").innerHTML=`<b>💡 Порада шефа</b><br>${tipFor(r)}<br><br><b>Дієта:</b> ${r.diet.join(", ")||"звичайна"}<br><b>Категорія:</b> ${r.cat}`;
   renderModalIngs(); renderSteps(); renderAutoTimers(); renderRateRow();
   pushRecent(r.id); syncModalFav();
+  $("#customDel").hidden=!isOwn(r);
   document.title=`${r.title} — HOLODYLNYK`;
   try{history.replaceState(null,"",`#r-${r.id}`)}catch{}
   $("#overlay").hidden=false; document.body.style.overflow="hidden";
@@ -415,7 +422,7 @@ function updProg(){
 $("#modalX").onclick=closeModal;
 $("#overlay").addEventListener("click",e=>{if(e.target.id==="overlay")closeModal();});
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){ closeCook(); closeModal(); closeDrawer(); $("#weekX").click(); $("#helpOverlay").hidden=true; return; }
+  if(e.key==="Escape"){ closeCook(); closeModal(); closeDrawer(); $("#weekX").click(); $("#helpOverlay").hidden=true; closeAdd(); return; }
   if(e.key==="/"&&document.activeElement!==ingInput&&document.activeElement!==$("#q")&&!currentRecipe){ e.preventDefault(); ingInput.focus(); return; }
   if(!$("#cookOverlay").hidden){
     if(e.key==="ArrowRight"){ cookIdx++; renderCook(); }
@@ -427,6 +434,7 @@ document.addEventListener("keydown",e=>{
 });
 // focus trap: Tab не виходить з верхнього відкритого вікна
 function topOverlay(){
+  if(!$("#addOverlay").hidden) return $("#addOverlay .modal");
   if(!$("#cookOverlay").hidden) return $("#cookOverlay");
   if(!$("#overlay").hidden) return $("#modal");
   if(!$("#weekOverlay").hidden) return $("#weekOverlay");
@@ -455,7 +463,7 @@ function pushRecent(id){
   renderRecent();
 }
 function renderRecent(){
-  const r=getRecent().map(id=>window.RECIPES.find(x=>x.id===id)).filter(Boolean);
+  const r=getRecent().map(id=>findRecipe(id)).filter(Boolean);
   const sec=$("#recentSection"); if(!r.length){sec.hidden=true;return;}
   sec.hidden=false;
   $("#recentRow").innerHTML=r.map(x=>`<div class="recent-item" data-id="${x.id}"><img loading="lazy" decoding="async" src="${x.img}" ${imgAttr(x.img)} alt="${esc(x.title)}" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${x.id}/400/200'"><span>${esc(x.title)}</span></div>`).join("");
@@ -466,7 +474,7 @@ $("#recentClear").onclick=()=>{ try{localStorage.setItem("hol_recent","[]")}catc
 // week planner
 let weekPlan=[];
 function poolFiltered(){
-  return window.RECIPES.filter(r=>!isExcluded(r))
+  return allRecipes().filter(r=>!isExcluded(r))
     .filter(r=>!$("#cat").value||r.cat===$("#cat").value)
     .filter(r=>!$("#diet").value||r.diet.includes($("#diet").value));
 }
@@ -577,7 +585,7 @@ function renderKitchen(){
     `<div><b>${new Set(c).size}</b>різних рецептів</div>`+
     `<div><b>${favs.size}</b>в улюбленому</div>`;
   const items=c.slice(-8).reverse().map((id,i)=>{
-    const r=window.RECIPES.find(x=>x.id===id); if(!r) return "";
+    const r=findRecipe(id); if(!r) return "";
     const d=dt[dt.length-1-i]||"";
     return `<div class="recent-item" data-id="${r.id}"><img loading="lazy" decoding="async" src="${r.img}" ${imgAttr(r.img)} alt="${esc(r.title)}" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${r.id}/400/200'"><span>${esc(r.title)}<br><span class="kitchen-date">${esc(d)}</span></span></div>`;
   }).join("");
@@ -596,6 +604,47 @@ function confetti(){
     document.body.appendChild(s); setTimeout(()=>s.remove(),1100);
   }
 }
+
+// add-recipe form
+function closeAdd(){ $("#addOverlay").hidden=true; if($("#overlay").hidden&&$("#cookOverlay").hidden) document.body.style.overflow=""; }
+$("#addRecipeBtn").onclick=()=>{ $("#addOverlay").hidden=false; document.body.style.overflow="hidden"; setTimeout(()=>$("#fTitle").focus(),50); };
+$("#addX").onclick=closeAdd;
+$("#fCancel").onclick=closeAdd;
+$("#addOverlay").addEventListener("click",e=>{ if(e.target.id==="addOverlay") closeAdd(); });
+$("#fSave").onclick=()=>{
+  const title=$("#fTitle").value.trim();
+  const ings=$("#fIngs").value.split("\n").map(s=>s.trim()).filter(Boolean).map(line=>{
+    const parts=line.split(/[-–—:]/); const n=(parts.shift()||"").trim();
+    return {n, a:parts.join("-").trim()};
+  }).filter(x=>x.n);
+  const steps=$("#fSteps").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  if(title.length<3){ toast("Дай назву від 3 літер"); $("#fTitle").focus(); return; }
+  if(ings.length<2){ toast("Треба мінімум 2 інгредієнти"); $("#fIngs").focus(); return; }
+  if(steps.length<2){ toast("Треба мінімум 2 кроки"); $("#fSteps").focus(); return; }
+  const diet=[...document.querySelectorAll(".fDiet:checked")].map(x=>x.value);
+  const imgUrl=$("#fImg").value.trim();
+  const id="u-"+Date.now().toString(36);
+  const rec={
+    id, title, desc:$("#fDesc").value.trim()||"Мій власний рецепт.",
+    img:/^https:\/\//.test(imgUrl)?imgUrl:`https://picsum.photos/seed/${id}/900/600`,
+    time:Math.min(480,Math.max(5,+$("#fTime").value||30)),
+    kcal:Math.min(2000,Math.max(10,+$("#fKcal").value||350)),
+    level:$("#fLevel").value, cat:$("#fCat").value, diet, ings, steps
+  };
+  const c=getCustom(); c.push(rec); saveCustom(c);
+  ["fTitle","fDesc","fImg","fIngs","fSteps"].forEach(i=>$("#"+i).value="");
+  document.querySelectorAll(".fDiet:checked").forEach(x=>x.checked=false);
+  closeAdd(); refreshCounts(); render();
+  toast("Рецепт збережено");
+  openModal(id);
+};
+$("#customDel").onclick=()=>{
+  if(!currentRecipe||!isOwn(currentRecipe)) return;
+  if(!confirm(`Видалити «${currentRecipe.title}»?`)) return;
+  saveCustom(getCustom().filter(x=>x.id!==currentRecipe.id));
+  closeModal(); refreshCounts(); render();
+  toast("Видалено");
+};
 
 // cook mode
 function openCook(){
@@ -797,7 +846,7 @@ if("serviceWorker" in navigator){
 // SEO: JSON-LD ItemList
 try{
   const ld={ "@context":"https://schema.org", "@type":"ItemList",
-    itemListElement: window.RECIPES.map((r,i)=>({ "@type":"ListItem", position:i+1,
+    itemListElement: allRecipes().map((r,i)=>({ "@type":"ListItem", position:i+1,
       item:{ "@type":"Recipe", name:r.title, description:r.desc, recipeCategory:r.cat,
         totalTime:`PT${r.time}M`, recipeYield:`${2} порції`,
         recipeIngredient:r.ings.map(x=>`${x.n} — ${x.a}`),
@@ -809,7 +858,7 @@ try{
 // deep link #r-id
 function openDeep(){
   const m=(location.hash||"").match(/^#r-(.+)/);
-  if(m&&window.RECIPES.some(r=>r.id===m[1])) openModal(m[1]);
+  if(m&&findRecipe(m[1])) openModal(m[1]);
 }
 window.addEventListener("hashchange",openDeep);
 

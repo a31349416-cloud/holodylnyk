@@ -148,6 +148,13 @@ main,.nav{position:relative;z-index:2}
 .m-ings li.miss-ing{cursor:pointer}
 .m-ings li.miss-ing:hover{border-color:var(--acc)}
 .linkbtn{background:none;border:0;color:var(--acc2);cursor:pointer;font:inherit;font-weight:800;text-decoration:underline}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-grid label{display:grid;gap:6px;font-size:13px;font-weight:800;color:var(--mut)}
+.form-grid label.wide{grid-column:1/-1}
+.form-grid input,.form-grid select,.form-grid textarea{background:var(--input);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--txt);font-family:var(--font-b);font-size:14px;outline:none;resize:vertical}
+.diet-pick{display:flex;gap:12px;flex-wrap:wrap}
+.own-tag{font-size:12px;font-weight:800;background:rgba(214,246,80,.15)!important;border:1px solid rgba(214,246,80,.4);padding:5px 10px;border-radius:100px;color:var(--lime)!important}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr}}
 .scrolltop{position:fixed;right:18px;bottom:18px;z-index:90;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:20px;cursor:pointer;opacity:0;pointer-events:none;transition:.25s}
 .scrolltop.show{opacity:1;pointer-events:auto}
 .scrolltop:hover{background:var(--acc);color:#fff}
