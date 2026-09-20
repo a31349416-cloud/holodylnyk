@@ -263,7 +263,7 @@ function render(){
   try{$("#statCooked").textContent=getCooked().length;}catch{}
   updateCatCounts();
   const avg=items.length?Math.round(items.reduce((a,r)=>a+r.time,0)/items.length):0;
-  const avgEl=$("#statAvg"); if(avgEl&&avg) avgEl.textContent=`~${avg} хв`;
+  const avgEl=$("#statAvg"); if(avgEl&&avg) avgEl.textContent=`~${fmtDur(avg)}`;
   $("#favCount").textContent=favs.size;
   $("#listCount").textContent=shopList.length;
   const exclTxt=excluded.size?` • без: ${[...excluded].join(", ")}`:"";
@@ -280,7 +280,7 @@ function render(){
       <div class="card-body">
         <h3>${hl(r.title,q)}</h3><p>${r.desc}</p>
         ${rateMini(r.id)}
-        <div class="meta"><span class="t">⏱ ${r.time} хв</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}${isOwn(r)?'<span class="own-tag">✎ моє</span>':""}${seasonEmoji(r)?`<span class="diet-tag">${seasonEmoji(r)}</span>`:""}</div>
+        <div class="meta"><span class="t">⏱ ${fmtDur(r.time)}</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}${isOwn(r)?'<span class="own-tag">✎ моє</span>':""}${seasonEmoji(r)?`<span class="diet-tag">${seasonEmoji(r)}</span>`:""}</div>
         ${selected.size?`<div class="miss">${r._s.miss.length?`Докупити: <b>${r._s.miss.slice(0,3).join(", ")}${r._s.miss.length>3?"…":""}</b>`:"✅ Все є! Можна готувати"}</div>`:`<div class="miss">Натисни щоб відкрити рецепт →</div>`}
       </div>
     </article>`).join("");
@@ -396,7 +396,7 @@ function openModal(id){
   else $("#mImg").removeAttribute("srcset");
   $("#mImg").onerror=function(){this.removeAttribute("srcset");this.src=`https://picsum.photos/seed/${r.id}/1000/600`};
   $("#mTitle").textContent=r.title;
-  $("#mMeta").textContent=`⏱ ${r.time} хв • ${r.kcal} ккал • ${r.level} • ${r.cat}`;
+  $("#mMeta").textContent=`⏱ ${fmtDur(r.time)} • ${r.kcal} ккал • ${r.level} • ${r.cat}`;
   $("#mMatch").textContent=selected.size?(s.pct>=70?`✅ ${s.pct}% — майже все є!`:`◐ Збіг ${s.pct}% — докупи: ${s.miss.slice(0,4).join(", ")||"нічого"}`):`☆ Відкрий рецепт і готуй`;
   $("#mSideInfo").innerHTML=`<b>💡 Порада шефа</b><br>${tipFor(r)}<br><br><b>Дієта:</b> ${r.diet.join(", ")||"звичайна"}<br><b>Категорія:</b> ${r.cat}`;
   renderModalIngs(); renderSteps(); renderAutoTimers(); renderRateRow();
@@ -557,7 +557,7 @@ function genWeek(){
   return out;
 }
 function renderWeek(){
-  $("#weekList").innerHTML=weekPlan.map(w=>`<li data-id="${w.id}"><img loading="lazy" decoding="async" src="${w.img}" ${imgAttr(w.img)} alt="" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${w.id}/200/200'"><div><b>${w.day} — ${esc(w.title)}</b><small>⏱ ${w.time} хв • ${w.kcal} ккал • збіг ${w._s.pct}%</small></div><span>→</span></li>`).join("")||`<li>Немає рецептів під фільтри — скинь їх.</li>`;
+  $("#weekList").innerHTML=weekPlan.map(w=>`<li data-id="${w.id}"><img loading="lazy" decoding="async" src="${w.img}" ${imgAttr(w.img)} alt="" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${w.id}/200/200'"><div><b>${w.day} — ${esc(w.title)}</b><small>⏱ ${fmtDur(w.time)} • ${w.kcal} ккал • збіг ${w._s.pct}%</small></div><span>→</span></li>`).join("")||`<li>Немає рецептів під фільтри — скинь їх.</li>`;
   const all=[...new Set(weekPlan.flatMap(w=>score(w).miss))];
   $("#weekSub").textContent=weekPlan.length?`7 страв • разом докупити: ${all.length?all.join(", "):"нічого — все є"}`:"";
 }
@@ -808,6 +808,12 @@ $("#shareTg").onclick=()=>{
 
 // timer
 function fmtT(s){return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;}
+function fmtDur(m){
+  m=Math.round(m);
+  if(m<60) return `${m} хв`;
+  const h=Math.floor(m/60), r=m%60;
+  return r?`${h} год ${r} хв`:`${h} год`;
+}
 function resetTimerUI(){$("#timerDigits").textContent=fmtT(timerLeft);}
 document.querySelectorAll(".timer-row button[data-t]").forEach(b=>{
   b.onclick=()=>{document.querySelectorAll(".timer-row button[data-t]").forEach(x=>x.classList.remove("on"));b.classList.add("on");timerSec=+b.dataset.t*60;timerLeft=timerSec;stopTimer();resetTimerUI();};
