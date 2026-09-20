@@ -31,9 +31,9 @@
       <a href="#grid-section">Каталог</a>
     </nav>
     <div class="nav-actions">
-      <button class="btn ghost sm" id="themeToggle" title="Світла / темна тема">◐</button>
-      <button class="btn ghost sm" id="favToggle" title="Улюблене">♡ <span id="favCount">0</span></button>
-      <button class="btn ghost sm" id="listToggle" title="Список покупок">🧾 <span id="listCount">0</span></button>
+      <button class="btn ghost sm" id="themeToggle" title="Світла / темна тема" aria-label="Перемкнути тему">◐</button>
+      <button class="btn ghost sm" id="favToggle" title="Улюблене" aria-label="Показати улюблене">♡ <span id="favCount">0</span></button>
+      <button class="btn ghost sm" id="listToggle" title="Список покупок" aria-label="Відкрити список покупок">🧾 <span id="listCount">0</span></button>
       <button class="btn primary sm" id="randomBtn">🎲 Мені пощастить</button>
     </div>
   </div>
@@ -51,7 +51,7 @@
     <div class="chips" id="chips"></div>
     <div class="search-row">
       <input id="ingInput" type="text" placeholder="Наприклад: картопля + яйця… (Enter щоб додати, / — фокус)" autocomplete="off">
-      <button class="btn icon" id="voiceBtn" title="Голосовий ввід">🎙</button>
+      <button class="btn icon" id="voiceBtn" title="Голосовий ввід" aria-label="Голосовий ввід продуктів">🎙</button>
       <button class="btn primary" id="addBtn">Додати</button>
     </div>
     <div class="suggest" id="suggest"></div>
@@ -160,7 +160,7 @@
 
 <!-- MODAL -->
 <div class="overlay" id="overlay" hidden>
-  <div class="modal" id="modal">
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
     <button class="modal-x" id="modalX">✕</button>
     <div class="modal-hero"><img id="mImg" alt=""><div class="modal-hero-grad"></div>
       <div class="modal-title"><h2 id="mTitle"></h2><p id="mMeta"></p></div>
@@ -209,7 +209,7 @@
 <!-- DRAWER shopping list -->
 <div class="drawer-wrap" id="drawerWrap" hidden>
   <div class="drawer-bg" id="drawerBg"></div>
-  <aside class="drawer">
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Список покупок">
     <div class="drawer-head"><h3>🧾 Список покупок</h3><button class="modal-x" id="drawerX">✕</button></div>
     <ul class="drawer-list" id="drawerList"></ul>
     <div class="drawer-foot">
@@ -237,7 +237,7 @@
 </div>
 
 <!-- COOK MODE -->
-<div class="cook" id="cookOverlay" hidden>
+<div class="cook" id="cookOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="cookTitle">
   <div class="cook-top"><span id="cookCount">1 / 5</span><h3 id="cookTitle"></h3><button class="modal-x static" id="cookX">✕</button></div>
   <div class="cook-step" id="cookStep"></div>
   <div class="cook-bar"><div class="progress"><i id="cookProg"></i></div></div>
@@ -249,7 +249,7 @@
   <p class="cook-hint">Працює з клавіатури: ← → • Esc — вийти</p>
 </div>
 
-<div class="toast-wrap" id="toasts"></div>
+<div class="toast-wrap" id="toasts" aria-live="polite" role="status"></div>
 <button class="scrolltop" id="scrollTop" aria-label="Догори">↑</button>
 
 <script src="js/recipes.js"></script>
