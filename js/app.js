@@ -144,14 +144,23 @@ ingInput.addEventListener("keydown",e=>{ if(e.key==="Enter") addIng(ingInput.val
 ingInput.addEventListener("input",()=>{
   const v=norm(ingInput.value); const box=$("#suggest");
   if(v.length<2){box.innerHTML="";return;}
-  const all=[...new Set(allRecipes().flatMap(r=>r.ings.map(i=>i.n)))];
-  const m=all.filter(a=>fuzzyHay(a,v)&&!selected.has(a)).slice(0,6);
-  box.innerHTML=m.map(x=>`<button>${x}</button>`).join("");
+  box.innerHTML=suggestHTML(suggestFor(v,selected));
 });
 $("#suggest").addEventListener("click",e=>{
-  const b=e.target.closest("button"); if(b) addIng(b.textContent);
+  const b=e.target.closest("button"); if(b) addIng(b.dataset.v||b.textContent);
 });
 
+// suggestions with recipe counts
+function suggestFor(v, skip){
+  const all=[...new Set(allRecipes().flatMap(r=>r.ings.map(i=>i.n)))];
+  return all
+    .filter(a=>fuzzyHay(a,v)&&![...skip].some(x=>ingMatch(a,x)))
+    .map(a=>({n:a,c:allRecipes().filter(r=>r.ings.some(i=>ingMatch(i.n,a))).length}))
+    .sort((x,y)=>y.c-x.c).slice(0,6);
+}
+function suggestHTML(list){
+  return list.map(x=>`<button data-v="${esc(x.n)}">${esc(x.n)} <small>(${x.c})</small></button>`).join("");
+}
 // excluded ("Не хочу")
 const exclInput=$("#exclInput");
 function renderExcl(){
@@ -167,11 +176,10 @@ exclInput.addEventListener("keydown",e=>{ if(e.key==="Enter") addExcl(exclInput.
 exclInput.addEventListener("input",()=>{
   const v=norm(exclInput.value), box=$("#exclSuggest");
   if(v.length<2){box.innerHTML="";return;}
-  const all=[...new Set(allRecipes().flatMap(r=>r.ings.map(i=>i.n)))];
-  box.innerHTML=all.filter(a=>fuzzyHay(a,v)&&![...excluded].some(x=>ingMatch(a,x))).slice(0,6).map(x=>`<button>${esc(x)}</button>`).join("");
+  box.innerHTML=suggestHTML(suggestFor(v,excluded));
 });
 $("#exclSuggest").addEventListener("click",e=>{
-  const b=e.target.closest("button"); if(b) addExcl(b.textContent);
+  const b=e.target.closest("button"); if(b) addExcl(b.dataset.v||b.textContent);
 });
 function isExcluded(recipe){
   const hay=(recipe.title+" "+recipe.ings.map(i=>i.n).join(" ")).toLowerCase();
