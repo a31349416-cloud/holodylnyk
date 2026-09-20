@@ -12,8 +12,7 @@ function fuzzyHay(hay, q){
   const H=unorm(hay);
   return unorm(q).split(" ").filter(Boolean).every(w=>H.includes(w));
 }
-const STAPLES = ["сіль","вода","олія","оливкова олія","чорний перець"];
-function staplesOn(){ const el=$("#staples"); return !el||el.checked; }
+const STAPLES = ["сіль","вода","олія","оливкова олія","чорний перець"];function staplesOn(){ const el=$("#staples"); return !el||el.checked; }
 function isStaple(name){ return staplesOn()&&STAPLES.some(s=>ingMatch(name,s)); }
 // synonym groups: different names, same product
 const SYNONYMS = [
@@ -71,6 +70,8 @@ function safeParse(key, fb){
 const selected = new Set(safeParse("hol_ings", []));
 const favs = new Set(safeParse("hol_favs", []));
 const excluded = new Set(safeParse("hol_excl", []));
+const hidden = new Set(safeParse("hol_hidden", []));
+function saveHidden(){ try{localStorage.setItem("hol_hidden",JSON.stringify([...hidden]))}catch{} }
 let shopList = safeParse("hol_shop", []).map(e=>typeof e==="string"?{n:e,a:""}:e);
 function saveShop(){ try{localStorage.setItem("hol_shop",JSON.stringify(shopList))}catch{} }
 function shopText(){ return shopList.map(e=>e.a?`${e.n} — ${e.a}`:e.n); }
@@ -235,6 +236,7 @@ function render(){
         mt=$("#maxTime").value, mk=$("#maxKcal").value, lv=$("#level").value, sort=$("#sort").value, onlyFav=$("#onlyFav").checked;
   const onlyPoss=$("#onlyPossible").checked;
   let items=allRecipes().map(r=>({...r,_s:score(r)}));
+  if(hidden.size) items=items.filter(r=>!hidden.has(r.id));
   if(onlyFav) items=items.filter(r=>favs.has(r.id));
   if(onlyPoss) items=items.filter(r=>r._s.pct===100);
   if(onlyMine) items=items.filter(r=>isOwn(r));
@@ -268,6 +270,8 @@ function render(){
   $("#listCount").textContent=shopList.length;
   const exclTxt=excluded.size?` • без: ${[...excluded].join(", ")}`:"";
   $("#activeHint").textContent=(selected.size?`Продукти: ${[...selected].join(", ")}`:"Додай продукти — відсортуємо за збігом")+exclTxt;
+  const uh=$("#unhideBtn");
+  if(uh) uh.hidden=hidden.size===0, uh.textContent=`Показати приховані (${hidden.size})`;
   $("#empty").hidden=items.length>0;
   lastItems=items;
   grid.innerHTML=items.map(r=>`
@@ -282,6 +286,7 @@ function render(){
         ${rateMini(r.id)}
         <div class="meta"><span class="t">⏱ ${fmtDur(r.time)}</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}${isOwn(r)?'<span class="own-tag">✎ моє</span>':""}${seasonEmoji(r)?`<span class="diet-tag">${seasonEmoji(r)}</span>`:""}</div>
         ${selected.size?`<div class="miss">${r._s.miss.length?`Докупити: <b>${r._s.miss.slice(0,3).join(", ")}${r._s.miss.length>3?"…":""}</b>`:"✅ Все є! Можна готувати"}</div>`:`<div class="miss">Натисни щоб відкрити рецепт →</div>`}
+        <button class="linkbtn hide-btn" data-hide="${r.id}">не показувати</button>
       </div>
     </article>`).join("");
   requestAnimationFrame(()=>{
@@ -319,6 +324,8 @@ $("#quickRow").addEventListener("click",e=>{
   persistFilters(); render();
 });
 grid.addEventListener("click",e=>{
+  const h=e.target.closest("[data-hide]");
+  if(h){e.stopPropagation();hidden.add(h.dataset.hide);saveHidden();render();toast("Приховано — повернути можна нижче фільтрів");return;}
   const f=e.target.closest("[data-fav]");
   if(f){e.stopPropagation();toggleFav(f.dataset.fav);return;}
   const c=e.target.closest(".card"); if(c) openModal(c.dataset.id);
@@ -365,6 +372,7 @@ function toggleFav(id){
 ["q","cat","diet","maxTime","maxKcal","level","sort","onlyFav","onlyPossible","staples"].forEach(id=>{
   $("#"+id).addEventListener("input",()=>{persistFilters();render();});
 });
+$("#unhideBtn").onclick=()=>{ hidden.clear(); saveHidden(); render(); };
 $("#clearAll").onclick=()=>{selected.clear();excluded.clear();onlyMine=false;onlySeason=false;onlyCooked=false;$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#maxKcal").value="";$("#level").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;$("#staples").checked=true;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
 $("#emptyReset").onclick=()=>$("#clearAll").click();
 $("#emptyFast").onclick=()=>{ $("#clearAll").click(); $("#maxTime").value="30"; $("#sort").value="time"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
@@ -902,7 +910,7 @@ $("#installBtn").onclick=async ()=>{
 };
 
 // backup / restore / wipe
-const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen","hol_custom"];
+const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen","hol_custom","hol_hidden"];
 $("#backupBtn").onclick=()=>{
   const data={};
   HOL_KEYS.forEach(k=>{ try{data[k]=JSON.parse(localStorage.getItem(k)??"null")}catch{data[k]=null} });

@@ -153,6 +153,8 @@ main,.nav{position:relative;z-index:2}
 .m-ings li.miss-ing{cursor:pointer}
 .m-ings li.miss-ing:hover{border-color:var(--acc)}
 .linkbtn{background:none;border:0;color:var(--acc2);cursor:pointer;font:inherit;font-weight:800;text-decoration:underline}
+.hide-btn{margin-top:8px;font-size:12px;opacity:.6}
+.hide-btn:hover{opacity:1}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form-grid label{display:grid;gap:6px;font-size:13px;font-weight:800;color:var(--mut)}
 .form-grid label.wide{grid-column:1/-1}
