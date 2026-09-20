@@ -12,6 +12,9 @@ function fuzzyHay(hay, q){
   const H=unorm(hay);
   return unorm(q).split(" ").filter(Boolean).every(w=>H.includes(w));
 }
+const STAPLES = ["сіль","вода","олія","оливкова олія","чорний перець"];
+function staplesOn(){ const el=$("#staples"); return !el||el.checked; }
+function isStaple(name){ return staplesOn()&&STAPLES.some(s=>ingMatch(name,s)); }
 function ingMatch(a, b){
   a=norm(a); b=norm(b);
   if(a.includes(b)||b.includes(a)) return true;
@@ -143,7 +146,7 @@ function score(recipe){
   if(selected.size===0) return {pct:0,have:0,miss:recipe.ings.map(i=>i.n)};
   let have=[],miss=[];
   recipe.ings.forEach(ing=>{
-    const ok=[...selected].some(s=>ingMatch(ing.n,s));
+    const ok=isStaple(ing.n)||[...selected].some(s=>ingMatch(ing.n,s));
     (ok?have:miss).push(ing.n);
   });
   const pct=Math.round(have.length/recipe.ings.length*100);
@@ -271,10 +274,10 @@ function toggleFav(id){
   try { localStorage.setItem("hol_favs",JSON.stringify([...favs])); } catch {}
   render();
 }
-["q","cat","diet","maxTime","sort","onlyFav","onlyPossible"].forEach(id=>{
+["q","cat","diet","maxTime","sort","onlyFav","onlyPossible","staples"].forEach(id=>{
   $("#"+id).addEventListener("input",()=>{persistFilters();render();});
 });
-$("#clearAll").onclick=()=>{selected.clear();excluded.clear();$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
+$("#clearAll").onclick=()=>{selected.clear();excluded.clear();$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;$("#staples").checked=true;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
 $("#emptyReset").onclick=()=>$("#clearAll").click();
 $("#emptyFast").onclick=()=>{ $("#clearAll").click(); $("#maxTime").value="30"; $("#sort").value="time"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
 $("#emptyTop").onclick=()=>{ $("#clearAll").click(); $("#sort").value="rate"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
@@ -352,7 +355,7 @@ function tipFor(r){
 function renderModalIngs(){
   $("#portionVal").textContent=portions;
   $("#mIngs").innerHTML=currentRecipe.ings.map(ing=>{
-    const have=[...selected].some(s=>ingMatch(ing.n,s));
+    const have=isStaple(ing.n)||[...selected].some(s=>ingMatch(ing.n,s));
     return `<li class="${have?'have':'miss-ing'}" data-n="${esc(ing.n)}" title="${have?'Є у твоїх продуктах':'Тисни щоб додати в мої продукти'}"><span><span class="dot">${have?'●':'○'}</span> ${esc(ing.n)}</span><b>${esc(scaleAmount(ing.a,portions))}</b></li>`;
   }).join("");
 }
@@ -690,7 +693,8 @@ function persistFilters(){
   try{localStorage.setItem(FKEY,JSON.stringify({
     q:$("#q").value,cat:$("#cat").value,diet:$("#diet").value,
     maxTime:$("#maxTime").value,sort:$("#sort").value,
-    onlyFav:$("#onlyFav").checked,onlyPossible:$("#onlyPossible").checked}));}catch{}
+    onlyFav:$("#onlyFav").checked,onlyPossible:$("#onlyPossible").checked,
+    staples:$("#staples").checked}));}catch{}
 }
 try{
   const f=JSON.parse(localStorage.getItem(FKEY)||"{}");
@@ -698,6 +702,7 @@ try{
   if(f.diet)$("#diet").value=f.diet; if(f.maxTime)$("#maxTime").value=f.maxTime;
   if(f.sort)$("#sort").value=f.sort;
   if(f.onlyFav)$("#onlyFav").checked=true; if(f.onlyPossible)$("#onlyPossible").checked=true;
+  if(f.staples===false)$("#staples").checked=false;
 }catch{}
 ["q","cat","diet","maxTime","sort"].forEach(id=>{
   $("#"+id).addEventListener("change",persistFilters);
