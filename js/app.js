@@ -399,7 +399,7 @@ function openModal(id){
   $("#mMeta").textContent=`⏱ ${fmtDur(r.time)} • ${r.kcal} ккал • ${r.level} • ${r.cat}`;
   $("#mMatch").textContent=selected.size?(s.pct>=70?`✅ ${s.pct}% — майже все є!`:`◐ Збіг ${s.pct}% — докупи: ${s.miss.slice(0,4).join(", ")||"нічого"}`):`☆ Відкрий рецепт і готуй`;
   $("#mSideInfo").innerHTML=`<b>💡 Порада шефа</b><br>${tipFor(r)}<br><br><b>Дієта:</b> ${r.diet.join(", ")||"звичайна"}<br><b>Категорія:</b> ${r.cat}`;
-  renderModalIngs(); renderSteps(); renderAutoTimers(); renderRateRow();
+  renderModalIngs(); renderSteps(); renderAutoTimers(); renderRateRow(); renderSimilar();
   pushRecent(r.id); syncModalFav();
   $("#customDel").hidden=!isOwn(r);
   document.title=`${r.title} — HOLODYLNYK`;
@@ -712,6 +712,19 @@ $("#customDel").onclick=()=>{
   closeModal(); refreshCounts(); render();
   toast("Видалено");
 };
+
+function renderSimilar(){
+  const box=$("#similarRow"); if(!box||!currentRecipe) return;
+  const sim=allRecipes()
+    .filter(x=>x.id!==currentRecipe.id&&x.cat===currentRecipe.cat&&!isExcluded(x))
+    .map(x=>({...x,_s:score(x)}))
+    .sort((a,b)=>b._s.pct-a._s.pct)
+    .slice(0,3);
+  box.innerHTML=sim.length?sim.map(x=>`<div class="recent-item" data-id="${x.id}"><img loading="lazy" decoding="async" src="${x.img}" ${imgAttr(x.img)} alt="${esc(x.title)}" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${x.id}/400/200'"><span>${esc(x.title)} • ${x._s.pct}%</span></div>`).join(""):`<span style="color:var(--mut);font-size:13px">Більше немає в цій категорії.</span>`;
+}
+$("#similarRow").addEventListener("click",e=>{
+  const c=e.target.closest("[data-id]"); if(c) openModal(c.dataset.id);
+});
 
 // cook mode
 function openCook(){
