@@ -83,9 +83,16 @@ function scaleAmount(a, portions){
 let currentRecipe = null, portions = 2, timerSec = 600, timerId = null, timerLeft = 600, doneSteps = new Set(), cookIdx = 0;
 let lastItems = [];
 let onlyMine = false, onlySeason = false;
-// autumn season (Sep–Nov)
+// seasons: autumn (Sep–Nov), winter (Dec–Feb)
 const SEASON_IDS = ["pumpkin-soup","pumpkin-porridge","mushroom-soup","mushroom-yushka","apple-pie","medovyk","uzvar","cottage-casserole","kysil","banosh"];
-function isSeason(r){ const m=new Date().getMonth(); return (m===8||m===9||m===10)&&SEASON_IDS.includes(r.id); }
+const WINTER_IDS = ["uzvar","kutia","holodets","medovyk","cheesecake-no-bake","syrnyky","roast-chicken","solyanka"];
+function seasonEmoji(r){
+  const m=new Date().getMonth();
+  if((m===8||m===9||m===10)&&SEASON_IDS.includes(r.id)) return "🍂 сезон";
+  if((m===11||m===0||m===1)&&WINTER_IDS.includes(r.id)) return "❄️ сезон";
+  return "";
+}
+function isSeason(r){ return !!seasonEmoji(r); }
 
 // theme
 function applyTheme(t){
@@ -271,7 +278,7 @@ function render(){
       <div class="card-body">
         <h3>${hl(r.title,q)}</h3><p>${r.desc}</p>
         ${rateMini(r.id)}
-        <div class="meta"><span class="t">⏱ ${r.time} хв</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}${isOwn(r)?'<span class="own-tag">✎ моє</span>':""}${isSeason(r)?'<span class="diet-tag">🍂 сезон</span>':""}</div>
+        <div class="meta"><span class="t">⏱ ${r.time} хв</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}${isOwn(r)?'<span class="own-tag">✎ моє</span>':""}${seasonEmoji(r)?`<span class="diet-tag">${seasonEmoji(r)}</span>`:""}</div>
         ${selected.size?`<div class="miss">${r._s.miss.length?`Докупити: <b>${r._s.miss.slice(0,3).join(", ")}${r._s.miss.length>3?"…":""}</b>`:"✅ Все є! Можна готувати"}</div>`:`<div class="miss">Натисни щоб відкрити рецепт →</div>`}
       </div>
     </article>`).join("");
