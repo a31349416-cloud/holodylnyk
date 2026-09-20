@@ -274,7 +274,15 @@ grid.addEventListener("click",e=>{
   const c=e.target.closest(".card"); if(c) openModal(c.dataset.id);
 });
 grid.addEventListener("keydown",e=>{
-  if(e.key==="Enter"){ const c=e.target.closest(".card"); if(c) openModal(c.dataset.id); }
+  if(e.key==="Enter"){ const c=e.target.closest(".card"); if(c) openModal(c.dataset.id); return; }
+  if(["ArrowRight","ArrowDown","ArrowLeft","ArrowUp"].includes(e.key)){
+    const cards=[...grid.querySelectorAll(".card")];
+    const i=cards.indexOf(e.target.closest(".card"));
+    if(i<0) return;
+    e.preventDefault();
+    const n=(e.key==="ArrowRight"||e.key==="ArrowDown")?i+1:i-1;
+    if(cards[n]) cards[n].focus();
+  }
 });
 function hl(text,q){
   const safe=esc(text);
