@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<script>try{document.documentElement.dataset.theme=localStorage.getItem("hol_theme")||"dark"}catch{}</script>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("hol_theme")||(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark")}catch{}</script>
 </head>
 <body>
 <div class="bg-orbs"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span></div>
