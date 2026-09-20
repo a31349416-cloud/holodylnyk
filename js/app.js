@@ -441,8 +441,10 @@ function openModal(id){
   $("#customDel").hidden=!isOwn(r);
   document.title=`${r.title} — HOLODYLNYK`;
   try{history.replaceState(null,"",`#r-${r.id}`)}catch{}
+  lastFocus=document.activeElement;
   $("#overlay").hidden=false; document.body.style.overflow="hidden";
   stopTimer(); timerLeft=timerSec; $("#timerStart").textContent="Старт"; resetTimerUI();
+  $("#modalX").focus({preventScroll:true});
 }
 function syncModalFav(){
   const b=$("#modalFav"); if(!b||!currentRecipe) return;
@@ -556,7 +558,10 @@ function closeModal(){
   const wasOpen=!$("#overlay").hidden;
   $("#overlay").hidden=true;document.body.style.overflow="";stopTimer();const b=$("#timerStart");if(b)b.textContent="Старт";
   if(wasOpen){ document.title="HOLODYLNYK — що приготувати з того, що є"; try{history.replaceState(null,"",location.pathname+location.search)}catch{} }
+  if(lastFocus&&document.contains(lastFocus)){ try{lastFocus.focus({preventScroll:true})}catch{} }
+  lastFocus=null;
 }
+let lastFocus=null;
 
 // recent
 function getRecent(){ try{const v=JSON.parse(localStorage.getItem("hol_recent")||"[]");return Array.isArray(v)?v:[]}catch{return[]} }
