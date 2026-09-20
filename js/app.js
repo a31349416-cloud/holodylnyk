@@ -1,6 +1,23 @@
 const $ = (s) => document.querySelector(s);
 const grid = $("#grid"), chipsEl = $("#chips"), ingInput = $("#ingInput");
 const norm = (s) => (s||"").toLowerCase().trim();
+const unorm = (s) => norm(s).replace(/ё/g,"е").replace(/[ъь]/g,"").replace(/\s+/g," ");
+function stem(w){
+  w=unorm(w);
+  const suf=["ою","ею","ами","ями","ів","ев","ах","ях","у","ю","а","я","о","е","і","и"];
+  for(const s of suf){ if(w.endsWith(s)&&w.length-s.length>=3){ return w.slice(0,-s.length); } }
+  return w;
+}
+function fuzzyHay(hay, q){
+  const H=unorm(hay);
+  return unorm(q).split(" ").filter(Boolean).every(w=>H.includes(w));
+}
+function ingMatch(a, b){
+  a=norm(a); b=norm(b);
+  if(a.includes(b)||b.includes(a)) return true;
+  const sa=stem(a), sb=stem(b);
+  return sa.length>2&&sb.length>2&&(sa.includes(sb)||sb.includes(sa));
+}
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function safeParse(key, fb){
   try { const v = JSON.parse(localStorage.getItem(key) ?? JSON.stringify(fb)); return Array.isArray(v) ? v : fb; }
@@ -67,7 +84,7 @@ ingInput.addEventListener("input",()=>{
   const v=norm(ingInput.value); const box=$("#suggest");
   if(v.length<2){box.innerHTML="";return;}
   const all=[...new Set(window.RECIPES.flatMap(r=>r.ings.map(i=>i.n)))];
-  const m=all.filter(a=>a.includes(v)&&!selected.has(a)).slice(0,6);
+  const m=all.filter(a=>fuzzyHay(a,v)&&!selected.has(a)).slice(0,6);
   box.innerHTML=m.map(x=>`<button>${x}</button>`).join("");
 });
 $("#suggest").addEventListener("click",e=>{
@@ -111,8 +128,7 @@ function score(recipe){
   if(selected.size===0) return {pct:0,have:0,miss:recipe.ings.map(i=>i.n)};
   let have=[],miss=[];
   recipe.ings.forEach(ing=>{
-    const n=norm(ing.n);
-    const ok=[...selected].some(s=> n.includes(s)||s.includes(n));
+    const ok=[...selected].some(s=>ingMatch(ing.n,s));
     (ok?have:miss).push(ing.n);
   });
   const pct=Math.round(have.length/recipe.ings.length*100);
@@ -133,7 +149,7 @@ function render(){
   if(onlyFav) items=items.filter(r=>favs.has(r.id));
   if(onlyPoss) items=items.filter(r=>r._s.pct===100);
   if(excluded.size) items=items.filter(r=>!isExcluded(r));
-  if(q) items=items.filter(r=>(r.title+" "+r.desc+" "+r.ings.map(i=>i.n).join(" ")).toLowerCase().includes(q));
+  if(q) items=items.filter(r=>fuzzyHay(r.title+" "+r.desc+" "+r.ings.map(i=>i.n).join(" "),q));
   if(cat) items=items.filter(r=>r.cat===cat);
   if(diet) items=items.filter(r=>r.diet.includes(diet));
   if(mt) items=items.filter(r=>r.time<=+mt);
@@ -309,8 +325,7 @@ function tipFor(r){
 function renderModalIngs(){
   $("#portionVal").textContent=portions;
   $("#mIngs").innerHTML=currentRecipe.ings.map(ing=>{
-    const n=norm(ing.n);
-    const have=[...selected].some(s=>n.includes(s)||s.includes(n));
+    const have=[...selected].some(s=>ingMatch(ing.n,s));
     return `<li class="${have?'have':'miss-ing'}" data-n="${esc(ing.n)}" title="${have?'Є у твоїх продуктах':'Тисни щоб додати в мої продукти'}"><span><span class="dot">${have?'●':'○'}</span> ${esc(ing.n)}</span><b>${esc(scaleAmount(ing.a,portions))}</b></li>`;
   }).join("");
 }
