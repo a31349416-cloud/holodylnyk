@@ -285,6 +285,8 @@ function openModal(id){
   $("#mSideInfo").innerHTML=`<b>💡 Порада шефа</b><br>${tipFor(r)}<br><br><b>Дієта:</b> ${r.diet.join(", ")||"звичайна"}<br><b>Категорія:</b> ${r.cat}`;
   renderModalIngs(); renderSteps(); renderAutoTimers(); renderRateRow();
   pushRecent(r.id); syncModalFav();
+  document.title=`${r.title} — HOLODYLNYK`;
+  try{history.replaceState(null,"",`#r-${r.id}`)}catch{}
   $("#overlay").hidden=false; document.body.style.overflow="hidden";
   stopTimer(); timerLeft=timerSec; $("#timerStart").textContent="Старт"; resetTimerUI();
 }
@@ -384,7 +386,11 @@ function trapTab(e){
   if(e.shiftKey&&document.activeElement===first){ e.preventDefault(); last.focus(); }
   else if(!e.shiftKey&&document.activeElement===last){ e.preventDefault(); first.focus(); }
 }
-function closeModal(){$("#overlay").hidden=true;document.body.style.overflow="";stopTimer();const b=$("#timerStart");if(b)b.textContent="Старт";}
+function closeModal(){
+  const wasOpen=!$("#overlay").hidden;
+  $("#overlay").hidden=true;document.body.style.overflow="";stopTimer();const b=$("#timerStart");if(b)b.textContent="Старт";
+  if(wasOpen){ document.title="HOLODYLNYK — що приготувати з того, що є"; try{history.replaceState(null,"",location.pathname+location.search)}catch{} }
+}
 
 // recent
 function getRecent(){ try{const v=JSON.parse(localStorage.getItem("hol_recent")||"[]");return Array.isArray(v)?v:[]}catch{return[]} }
