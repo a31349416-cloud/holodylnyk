@@ -130,11 +130,42 @@ function refreshCounts(){
 }
 refreshCounts();
 
-// popular (grouped)
+// popular shelf: emoji tiles with recipe counts
+const ING_EMOJI = {
+"курка":"🍗","куряче філе":"🍗","фарш":"🧆","свинина":"🥩","яловичина":"🥩","баранина":"🥩",
+"ковбаса":"🌭","копченості":"🥓","сало":"🥓","печінка куряча":"🍖","оселедець":"🐟","тунець":"🐟",
+"риба":"🐟","креветки":"🍤","яйця":"🥚","молоко":"🥛","кефір":"🥛","сметана":"🍶","сир":"🧀",
+"вершкове масло":"🧈","йогурт":"🍦","фета":"🧀","бринза":"🧀","крем-сир":"🧀","плавлений сир":"🧀",
+"картопля":"🥔","цибуля":"🧅","морква":"🥕","помідори":"🍅","огірок":"🥒","капуста":"🥬",
+"буряк":"🟣","перець болгарський":"🫑","часник":"🧄","печериці":"🍄","гриби":"🍄","гарбуз":"🎃",
+"кабачки":"🥒","баклажани":"🍆","кукурудза":"🌽","зелень":"🌿","кріп":"🌿","борошно":"🌾",
+"рис":"🍚","гречка":"🥣","макарони":"🍝","локшина":"🍜","манка":"🥣","вівсянка":"🥣",
+"пшоно":"🌾","перловка":"🌾","горох":"🫛","квасоля":"🫘","сочевиця":"🟠","нут":"🟡",
+"яблука":"🍎","банан":"🍌","лимон":"🍋","авокадо":"🥑","ягоди":"🫐","вишня":"🍒",
+"мед":"🍯","цукор":"🍬","ваніль":"🌸","кориця":"🪵","томатна паста":"🥫","майонез":"🫙",
+"соєвий соус":"🫗","олія":"🫒","гірчиця":"🟡"
+};
+let popCounts=null;
+function getPopCounts(){
+  if(popCounts) return popCounts;
+  popCounts={};
+  const recipes=allRecipes();
+  const names=[...new Set(recipes.flatMap(r=>r.ings.map(i=>i.n)))];
+  const perName={};
+  names.forEach(n=>{ perName[n]=recipes.filter(r=>r.ings.some(i=>i.n===n)).length; });
+  (window.POPULAR||[]).forEach(p=>{
+    popCounts[p]=names.filter(n=>ingMatch(n,p)).reduce((a,n)=>a+perName[n],0);
+  });
+  return popCounts;
+}
 function renderPopular(){
-  const groups=window.POPULAR_GROUPS||[{t:"Популярне",items:window.POPULAR}];
+  const groups=window.POPULAR_GROUPS||[{t:"",items:window.POPULAR}];
+  const counts=getPopCounts();
   $("#popularRow").innerHTML=groups.map(g=>
-    `<div class="pop-group"><b>${esc(g.t)}</b><div>${g.items.map(p=>`<button data-p="${esc(p)}" class="${selected.has(p)?'added':''}">+ ${esc(p)}</button>`).join("")}</div></div>`
+    `<div class="pop-group"><b>${esc(g.t)}</b><div class="pop-shelf">${g.items.map(p=>{
+      const on=selected.has(p);
+      return `<button data-p="${esc(p)}" class="tile${on?" on":""}"><i>${ING_EMOJI[p]||"🧺"}</i><span>${esc(p)}</span><small>${counts[p]||0} рец.</small>${on?"<em>✓</em>":""}</button>`;
+    }).join("")}</div></div>`
   ).join("");
 }
 $("#popularRow").addEventListener("click",e=>{
@@ -799,7 +830,7 @@ $("#fSave").onclick=()=>{
   ["fTitle","fDesc","fImg","fIngs","fSteps"].forEach(i=>$("#"+i).value="");
   document.querySelectorAll(".fDiet:checked").forEach(x=>x.checked=false);
   const wasEdit=!!editingId;
-  closeAdd(); refreshCounts(); render(); renderDishDay();
+  closeAdd(); refreshCounts(); popCounts=null; render(); renderDishDay();
   toast(wasEdit?"Зміни збережено":"Рецепт збережено");
   openModal(id);
 };
@@ -821,7 +852,7 @@ $("#customDel").onclick=()=>{
   if(!currentRecipe||!isOwn(currentRecipe)) return;
   if(!confirm(`Видалити «${currentRecipe.title}»?`)) return;
   saveCustom(getCustom().filter(x=>x.id!==currentRecipe.id));
-  closeModal(); refreshCounts(); render(); renderDishDay();
+  closeModal(); refreshCounts(); popCounts=null; render(); renderDishDay();
   toast("Видалено");
 };
 
