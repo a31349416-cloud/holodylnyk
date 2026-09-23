@@ -85,7 +85,9 @@ main,.nav{position:relative;z-index:2}
 .suggest button:hover{color:#fff;border-color:var(--acc)}
 .popular{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:13px;color:var(--mut)}
 .popular>span{white-space:nowrap;padding-top:7px;font-weight:700}
-#popularRow{display:flex;flex-wrap:wrap;gap:7px}
+#popularRow{display:grid;gap:10px;flex:1}
+.pop-group b{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.pop-group div{display:flex;flex-wrap:wrap;gap:7px}
 #popularRow button{background:rgba(214,246,80,.1);border:1px solid rgba(214,246,80,.25);color:#e8f5b0;border-radius:100px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer}
 #popularRow button:hover{background:var(--lime);color:#111}
 #popularRow button.added{opacity:.3;pointer-events:none}

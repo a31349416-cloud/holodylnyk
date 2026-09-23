@@ -130,10 +130,12 @@ function refreshCounts(){
 }
 refreshCounts();
 
-// popular
+// popular (grouped)
 function renderPopular(){
-  $("#popularRow").innerHTML = window.POPULAR.map(p=>
-    `<button data-p="${p}" class="${selected.has(p)?'added':''}">+ ${p}</button>`).join("");
+  const groups=window.POPULAR_GROUPS||[{t:"Популярне",items:window.POPULAR}];
+  $("#popularRow").innerHTML=groups.map(g=>
+    `<div class="pop-group"><b>${esc(g.t)}</b><div>${g.items.map(p=>`<button data-p="${esc(p)}" class="${selected.has(p)?'added':''}">+ ${esc(p)}</button>`).join("")}</div></div>`
+  ).join("");
 }
 $("#popularRow").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
