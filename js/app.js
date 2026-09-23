@@ -414,6 +414,15 @@ $("#dishDay").addEventListener("click",e=>{ const id=e.currentTarget.dataset.id;
 $("#dishDay").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const id=e.currentTarget.dataset.id; if(id) openModal(id); } });
 $("#favToggle").onclick=()=>{const c=$("#onlyFav");c.checked=!c.checked;render();document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"});};
 
+$("#cookbookBtn").onclick=()=>{
+  if(!lastItems.length){ toast("Немає рецептів під фільтри"); return; }
+  const txt=lastItems.map((r,i)=>
+    `${i+1}. ${r.title}\n${fmtDur(r.time)} • ${r.kcal} ккал • ${r.level} • ${r.cat}\n${r.desc}\n\nІнгредієнти:\n${r.ings.map(x=>`- ${x.n}: ${x.a}`).join("\n")}\n\nКроки:\n${r.steps.map((s,j)=>`${j+1}. ${s}`).join("\n")}`
+  ).join("\n\n---\n\n");
+  download("knyga-receptiv.txt",`HOLODYLNYK — кулінарна книга (${lastItems.length} рецептів)\n\n${txt}\n`);
+  toast(`Книга збережена: ${lastItems.length}`);
+};
+
 // random (respects current filters)
 $("#randomBtn").onclick=()=>{
   const pool=lastItems.length?lastItems:allRecipes();
