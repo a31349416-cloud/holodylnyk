@@ -80,7 +80,18 @@ let shopList = safeParse("hol_shop", []).map(e=>typeof e==="string"?{n:e,a:""}:e
 const bought = new Set(safeParse("hol_bought", []));
 function saveBought(){ try{localStorage.setItem("hol_bought",JSON.stringify([...bought]))}catch{} }
 function saveShop(){ try{localStorage.setItem("hol_shop",JSON.stringify(shopList))}catch{} }
-function shopText(){ return shopList.map(e=>e.a?`${e.n} — ${e.a}`:e.n); }
+function shopGroups(){
+  const groups=[], seen={};
+  shopList.forEach(e=>{
+    const g=e.from||"Інше";
+    if(!(g in seen)){ seen[g]=groups.length; groups.push({from:g,items:[]}); }
+    groups[seen[g]].items.push(e);
+  });
+  return groups;
+}
+function shopText(){
+  return shopGroups().map(g=>`${g.from}:\n${g.items.map(e=>`- ${e.a?`${e.n} — ${e.a}`:e.n}`).join("\n")}`).join("\n\n");
+}
 function scaleAmount(a, portions){
   const m=String(a||"").match(/([\d.]+)\s*(.*)/);
   if(!m) return a||"";
@@ -687,11 +698,10 @@ $("#weekList").addEventListener("click",e=>{
 $("#weekToShop").onclick=()=>{
   let added=0;
   const fp=weekPort();
-  weekPlan.flatMap(w=>score(w).miss).forEach(m=>{
+  weekPlan.flatMap(w=>score(w).miss.map(m=>({m,w}))).forEach(({m,w})=>{
     if(shopList.some(e=>e.n===m)) return;
-    const src=weekPlan.map(w=>w).find(w=>w.ings.some(i=>i.n===m));
-    const ing=src?src.ings.find(i=>i.n===m):null;
-    shopList.push({n:m,a:ing?scaleAmount(ing.a,fp):""}); added++;
+    const ing=w.ings.find(i=>i.n===m);
+    shopList.push({n:m,a:ing?scaleAmount(ing.a,fp):"",from:w.title}); added++;
   });
   saveShop();
   render(); renderDrawer(); toast(added?`У список: +${added} (×${fp} порцій)`:"Все вже в списку");
@@ -944,7 +954,7 @@ $("#toListBtn").onclick=()=>{
   s.miss.forEach(m=>{
     if(shopList.some(e=>e.n===m)) return;
     const ing=currentRecipe.ings.find(i=>i.n===m);
-    shopList.push({n:m,a:ing?scaleAmount(ing.a,portions):""}); added++;
+    shopList.push({n:m,a:ing?scaleAmount(ing.a,portions):"",from:currentRecipe.title}); added++;
   });
   saveShop();
   render(); renderDrawer();
@@ -953,7 +963,16 @@ $("#toListBtn").onclick=()=>{
 };
 function renderDrawer(){
   $("#listCount").textContent=shopList.length;
-  $("#drawerList").innerHTML=shopList.length?shopList.map((e,i)=>`<li class="${bought.has(e.n)?"done":""}" data-i="${i}"><span>${esc(e.a?`${e.n} — ${e.a}`:e.n)}</span><button data-d="${i}" aria-label="Прибрати">✕</button></li>`).join(""):`<li style="opacity:.6">Порожньо. Відкрий рецепт → «Додати відсутнє»</li>`;
+  if(!shopList.length){ $("#drawerList").innerHTML=`<li style="opacity:.6">Порожньо. Відкрий рецепт → «Додати відсутнє»</li>`; return; }
+  let html="";
+  shopGroups().forEach(g=>{
+    html+=`<li class="shop-head">${esc(g.from)}</li>`;
+    g.items.forEach(e=>{
+      const i=shopList.indexOf(e);
+      html+=`<li class="${bought.has(e.n)?"done":""}" data-i="${i}"><span>${esc(e.a?`${e.n} — ${e.a}`:e.n)}</span><button data-d="${i}" aria-label="Прибрати">✕</button></li>`;
+    });
+  });
+  $("#drawerList").innerHTML=html;
 }
 $("#drawerList").addEventListener("click",e=>{
   const b=e.target.closest("[data-d]");
@@ -978,13 +997,13 @@ $("#drawerX").onclick=closeDrawer;
 $("#drawerBg").onclick=closeDrawer;
 $("#clearList").onclick=()=>{shopList=[];bought.clear();saveShop();saveBought();renderDrawer();render();};
 $("#copyList").onclick=async ()=>{
-  const text="Список покупок:\n- "+shopText().join("\n- ");
+  const text="Список покупок (HOLODYLNYK):\n\n"+shopText();
   try { await navigator.clipboard.writeText(text); toast("Скопійовано в буфер"); }
   catch { toast("Не вдалось скопіювати"); }
 };
 $("#dlList").onclick=()=>{
   if(!shopList.length){ toast("Список порожній"); return; }
-  download("spysok-pokupok.txt","Список покупок (HOLODYLNYK):\n- "+shopText().join("\n- ")+"\n");
+  download("spysok-pokupok.txt","Список покупок (HOLODYLNYK):\n\n"+shopText()+"\n");
   toast("Файл збережено");
 };
 $("#dlWeek").onclick=()=>{
@@ -994,7 +1013,7 @@ $("#dlWeek").onclick=()=>{
   toast("Файл збережено");
 };
 $("#shareTg").onclick=()=>{
-  const text=encodeURIComponent("Мій список покупок (HOLODYLNYK):\n- "+shopText().join("\n- "));
+  const text=encodeURIComponent("Мій список покупок (HOLODYLNYK):\n\n"+shopText());
   window.open(`https://t.me/share/url?url=&text=${text}`,"_blank");
 };
 

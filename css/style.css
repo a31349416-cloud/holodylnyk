@@ -299,6 +299,7 @@ main,.nav{position:relative;z-index:2}
 .drawer-list li button{background:none;border:0;color:var(--mut);cursor:pointer;font-size:14px}
 .drawer-list li.done{opacity:.5}
 .drawer-list li.done span{text-decoration:line-through}
+.shop-head{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--acc2);background:none!important;border:0!important;padding:8px 4px 0!important;cursor:default}
 .drawer-foot{display:flex;gap:8px;margin-top:12px}
 .toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;display:grid;gap:8px;justify-items:center;max-width:94vw}
 .toast{background:#221c16;border:1px solid rgba(255,122,24,.4);padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;animation:pop .3s ease;white-space:nowrap;max-width:94vw}
