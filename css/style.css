@@ -271,6 +271,8 @@ main,.nav{position:relative;z-index:2}
 .drawer-list{list-style:none;flex:1;overflow-y:auto;display:grid;gap:8px;align-content:start}
 .drawer-list li{background:rgba(255,255,255,.05);border:1px solid var(--line);padding:10px 13px;border-radius:12px;font-size:14px;display:flex;justify-content:space-between;gap:8px}
 .drawer-list li button{background:none;border:0;color:var(--mut);cursor:pointer;font-size:14px}
+.drawer-list li.done{opacity:.5}
+.drawer-list li.done span{text-decoration:line-through}
 .drawer-foot{display:flex;gap:8px;margin-top:12px}
 .toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;display:grid;gap:8px}
 .toast{background:#221c16;border:1px solid rgba(255,122,24,.4);padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;animation:pop .3s ease;white-space:nowrap}

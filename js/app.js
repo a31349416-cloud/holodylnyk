@@ -77,6 +77,8 @@ const excluded = new Set(safeParse("hol_excl", []));
 const hidden = new Set(safeParse("hol_hidden", []));
 function saveHidden(){ try{localStorage.setItem("hol_hidden",JSON.stringify([...hidden]))}catch{} }
 let shopList = safeParse("hol_shop", []).map(e=>typeof e==="string"?{n:e,a:""}:e);
+const bought = new Set(safeParse("hol_bought", []));
+function saveBought(){ try{localStorage.setItem("hol_bought",JSON.stringify([...bought]))}catch{} }
 function saveShop(){ try{localStorage.setItem("hol_shop",JSON.stringify(shopList))}catch{} }
 function shopText(){ return shopList.map(e=>e.a?`${e.n} — ${e.a}`:e.n); }
 function scaleAmount(a, portions){
@@ -900,20 +902,30 @@ $("#toListBtn").onclick=()=>{
 };
 function renderDrawer(){
   $("#listCount").textContent=shopList.length;
-  $("#drawerList").innerHTML=shopList.length?shopList.map((e,i)=>`<li>${esc(e.a?`${e.n} — ${e.a}`:e.n)}<button data-d="${i}">✕</button></li>`).join(""):`<li style="opacity:.6">Порожньо. Відкрий рецепт → «Додати відсутнє»</li>`;
+  $("#drawerList").innerHTML=shopList.length?shopList.map((e,i)=>`<li class="${bought.has(e.n)?"done":""}" data-i="${i}"><span>${esc(e.a?`${e.n} — ${e.a}`:e.n)}</span><button data-d="${i}" aria-label="Прибрати">✕</button></li>`).join(""):`<li style="opacity:.6">Порожньо. Відкрий рецепт → «Додати відсутнє»</li>`;
 }
 $("#drawerList").addEventListener("click",e=>{
-  const b=e.target.closest("button"); if(!b) return;
-  shopList.splice(+b.dataset.d,1);
-  saveShop();
-  renderDrawer(); render();
+  const b=e.target.closest("[data-d]");
+  if(b){
+    const gone=shopList.splice(+b.dataset.d,1)[0];
+    if(gone) bought.delete(gone.n);
+    saveShop(); saveBought();
+    renderDrawer(); render();
+    return;
+  }
+  const li=e.target.closest("li[data-i]");
+  if(li){
+    const n=shopList[+li.dataset.i].n;
+    bought.has(n)?bought.delete(n):bought.add(n);
+    saveBought(); renderDrawer();
+  }
 });
 function openDrawer(){$("#drawerWrap").hidden=false;renderDrawer();}
 function closeDrawer(){$("#drawerWrap").hidden=true;}
 $("#listToggle").onclick=openDrawer;
 $("#drawerX").onclick=closeDrawer;
 $("#drawerBg").onclick=closeDrawer;
-$("#clearList").onclick=()=>{shopList=[];saveShop();renderDrawer();render();};
+$("#clearList").onclick=()=>{shopList=[];bought.clear();saveShop();saveBought();renderDrawer();render();};
 $("#copyList").onclick=async ()=>{
   const text="Список покупок:\n- "+shopText().join("\n- ");
   try { await navigator.clipboard.writeText(text); toast("Скопійовано в буфер"); }
@@ -994,7 +1006,7 @@ $("#installBtn").onclick=async ()=>{
 };
 
 // backup / restore / wipe
-const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen","hol_custom","hol_hidden","hol_plans"];
+const HOL_KEYS=["hol_ings","hol_excl","hol_favs","hol_shop","hol_bought","hol_recent","hol_cooked","hol_cooked_dates","hol_rate","hol_theme","hol_filters","hol_seen","hol_custom","hol_hidden","hol_plans"];
 $("#backupBtn").onclick=()=>{
   const data={};
   HOL_KEYS.forEach(k=>{ try{data[k]=JSON.parse(localStorage.getItem(k)??"null")}catch{data[k]=null} });
