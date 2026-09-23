@@ -615,7 +615,7 @@ function genWeek(){
   return out;
 }
 function renderWeek(){
-  $("#weekList").innerHTML=weekPlan.map(w=>`<li data-id="${w.id}"><img loading="lazy" decoding="async" src="${w.img}" ${imgAttr(w.img)} alt="" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${w.id}/200/200'"><div><b>${w.day} — ${esc(w.title)}</b><small>⏱ ${fmtDur(w.time)} • ${w.kcal} ккал • збіг ${w._s.pct}%</small></div><span>→</span></li>`).join("")||`<li>Немає рецептів під фільтри — скинь їх.</li>`;
+  $("#weekList").innerHTML=weekPlan.map(w=>`<li data-id="${w.id}"><img loading="lazy" decoding="async" src="${w.img}" ${imgAttr(w.img)} alt="" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${w.id}/200/200'"><div><b>${w.day} — ${esc(w.title)}</b><small>⏱ ${fmtDur(w.time)} • ${w.kcal} ккал • збіг ${w._s.pct}%</small></div><span>→</span></li>`).join("")||`<li><div><b>Немає рецептів під фільтри</b><small>Фільтри заважають — скинь їх</small></div><button class="btn ghost sm" id="weekClearFilters">Скинути</button></li>`;
   const all=[...new Set(weekPlan.flatMap(w=>score(w).miss))];
   const total=weekPlan.reduce((a,w)=>a+w.time,0);
   $("#weekSub").textContent=weekPlan.length?`${weekPlan.length} страв • разом ${fmtDur(total)} готування • докупити: ${all.length?all.join(", "):"нічого — все є"}`:"";
@@ -647,7 +647,10 @@ $("#copyWeekBtn").onclick=async ()=>{
 };
 $("#weekX").onclick=()=>{ $("#weekOverlay").hidden=true; if($("#overlay").hidden) document.body.style.overflow=""; };
 $("#weekOverlay").addEventListener("click",e=>{ if(e.target.id==="weekOverlay") $("#weekX").click(); });
-$("#weekList").addEventListener("click",e=>{ const li=e.target.closest("li[data-id]"); if(!li) return; $("#weekX").click(); openModal(li.dataset.id); });
+$("#weekList").addEventListener("click",e=>{
+  if(e.target.closest("#weekClearFilters")){ $("#cat").value="";$("#diet").value="";$("#level").value="";excluded.clear();renderExcl();persistFilters();render();weekPlan=genWeek();renderWeek();return; }
+  const li=e.target.closest("li[data-id]"); if(!li) return; $("#weekX").click(); openModal(li.dataset.id);
+});
 $("#weekToShop").onclick=()=>{
   let added=0;
   const fp=weekPort();
