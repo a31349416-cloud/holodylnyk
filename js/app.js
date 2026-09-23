@@ -636,12 +636,13 @@ $("#dayBtn").onclick=()=>{
   if(!plan.length){ toast("Немає рецептів під фільтри"); return; }
   weekPlan=plan; renderWeek();
 };
+function weekPort(){ return Math.min(12,Math.max(1,+($("#weekPortions")||{}).value||2)); }
 function weekText(){
-  return weekPlan.map(w=>`${w.day} — ${w.title} (${w.time} хв)`).join("\n");
+  return `Моє меню (HOLODYLNYK, ×${weekPort()} порцій):\n`+weekPlan.map(w=>`${w.day} — ${w.title} (${fmtDur(w.time)})`).join("\n");
 }
 $("#copyWeekBtn").onclick=async ()=>{
   if(!weekPlan.length){ toast("Спочатку згенеруй меню"); return; }
-  try{ await navigator.clipboard.writeText("Моє меню (HOLODYLNYK):\n"+weekText()); toast("Меню скопійовано"); }
+  try{ await navigator.clipboard.writeText(weekText()); toast("Меню скопійовано"); }
   catch{ toast("Не вдалось скопіювати"); }
 };
 $("#weekX").onclick=()=>{ $("#weekOverlay").hidden=true; if($("#overlay").hidden) document.body.style.overflow=""; };
@@ -649,14 +650,15 @@ $("#weekOverlay").addEventListener("click",e=>{ if(e.target.id==="weekOverlay") 
 $("#weekList").addEventListener("click",e=>{ const li=e.target.closest("li[data-id]"); if(!li) return; $("#weekX").click(); openModal(li.dataset.id); });
 $("#weekToShop").onclick=()=>{
   let added=0;
+  const fp=weekPort();
   weekPlan.flatMap(w=>score(w).miss).forEach(m=>{
     if(shopList.some(e=>e.n===m)) return;
     const src=weekPlan.map(w=>w).find(w=>w.ings.some(i=>i.n===m));
     const ing=src?src.ings.find(i=>i.n===m):null;
-    shopList.push({n:m,a:ing?ing.a:""}); added++;
+    shopList.push({n:m,a:ing?scaleAmount(ing.a,fp):""}); added++;
   });
   saveShop();
-  render(); renderDrawer(); toast(added?`У список: +${added}`:"Все вже в списку");
+  render(); renderDrawer(); toast(added?`У список: +${added} (×${fp} порцій)`:"Все вже в списку");
 };
 
 // ratings (local)
@@ -952,7 +954,7 @@ $("#dlList").onclick=()=>{
 $("#dlWeek").onclick=()=>{
   if(!weekPlan.length){ toast("Спочатку згенеруй меню"); return; }
   const all=[...new Set(weekPlan.flatMap(w=>score(w).miss))];
-  download("menu-tyzhden.txt",`Моє меню (HOLODYLNYK):\n${weekText()}\n\nДокупити:\n- ${all.join("\n- ")||"нічого"}\n`);
+  download("menu-tyzhden.txt",`${weekText()}\n\nДокупити:\n- ${all.join("\n- ")||"нічого"}\n`);
   toast("Файл збережено");
 };
 $("#shareTg").onclick=()=>{

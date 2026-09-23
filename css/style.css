@@ -201,7 +201,8 @@ main,.nav{position:relative;z-index:2}
 .week-list li img{width:64px;height:64px;object-fit:cover;border-radius:10px}
 .week-list b{font-size:14px;display:block}
 .week-list small{color:var(--mut)}
-.week-foot{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.week-foot{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center}
+.week-foot select{background:var(--input);border:1px solid var(--line);border-radius:10px;padding:7px 10px;color:var(--txt);font-family:var(--font-b);font-size:13px}
 .plan-row{display:flex;gap:8px;margin-top:14px}
 .plan-row input{flex:1;background:var(--input);border:1px solid var(--line);border-radius:12px;padding:9px 12px;color:var(--txt);font-family:var(--font-b);font-size:13px;outline:none}
 .plan-list{display:grid;gap:8px;margin-top:10px}
