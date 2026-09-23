@@ -285,7 +285,7 @@ function render(){
   $("#empty").hidden=items.length>0;
   lastItems=items;
   grid.innerHTML=items.map(r=>`
-    <article class="card" data-id="${r.id}" tabindex="0" aria-label="${esc(r.title)}">
+    <article class="card" data-id="${r.id}" tabindex="0" aria-label="${esc(r.title)}, ${fmtDur(r.time)}, ${r.kcal} ккал${selected.size?`, збіг ${r._s.pct}%`:""}">
       <div class="card-img">
         <img loading="lazy" decoding="async" src="${r.img}" ${imgAttr(r.img)} alt="${esc(r.title)}" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${r.id}/800/600'">
         ${badge(r._s.pct)}
