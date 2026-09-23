@@ -1130,10 +1130,44 @@ try{
   $("#"+id).addEventListener("change",persistFilters);
 });
 
+// instant updates: version check with one-click refresh
+const APP_VERSION = 25;
+let updateShown = false;
+async function checkUpdate(){
+  try{
+    const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok) return;
+    const {v}=await r.json();
+    if(v&&v!==APP_VERSION&&!updateShown) showUpdateBar(v);
+  }catch{}
+}
+function showUpdateBar(v){
+  updateShown=true;
+  const bar=document.createElement("div");
+  bar.className="updatebar";
+  bar.innerHTML=`<span>Вийшла v${v} — оновити зараз?</span>`;
+  const btn=document.createElement("button");
+  btn.textContent="Оновити";
+  btn.onclick=applyUpdate;
+  bar.appendChild(btn);
+  document.body.appendChild(bar);
+}
+async function applyUpdate(){
+  try{
+    if("serviceWorker" in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+  }catch{}
+  location.reload();
+}
 // PWA service worker + update notice
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("sw.js").then(reg=>{
+      try{ reg.update(); }catch{}
       reg.onupdatefound=()=>{
         const w=reg.installing;
         if(!w) return;
@@ -1146,6 +1180,9 @@ if("serviceWorker" in navigator){
     }).catch(()=>{});
   });
 }
+setTimeout(checkUpdate,4000);
+setInterval(checkUpdate,15*60*1000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) checkUpdate(); });
 
 // SEO: JSON-LD ItemList
 try{
