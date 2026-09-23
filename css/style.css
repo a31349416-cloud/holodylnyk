@@ -11,7 +11,14 @@
   --line:rgba(60,40,10,.14); --txt:#231708; --mut:#7a6a55; --input:#fffdf6;
 }
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--txt);font-family:var(--font-b);overflow-x:hidden;min-height:100vh;transition:background .3s,color .3s}
+body{background:
+  radial-gradient(1100px 550px at 12% -6%,rgba(255,122,24,.14),transparent 60%),
+  radial-gradient(900px 500px at 88% 4%,rgba(255,61,142,.1),transparent 60%),
+  radial-gradient(1000px 700px at 50% 110%,rgba(214,246,80,.05),transparent 60%),
+  var(--bg);color:var(--txt);font-family:var(--font-b);overflow-x:hidden;min-height:100vh;transition:background .3s,color .3s}
+body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(0,0,0,.5) 100%)}
+[data-theme="light"] body::after{background:radial-gradient(120% 90% at 50% 40%,transparent 60%,rgba(120,70,10,.14) 100%)}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-thumb{background:linear-gradient(var(--acc),#ff3d00);border-radius:100px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -22,10 +29,13 @@ kbd{background:rgba(255,255,255,.1);border:1px solid var(--line);border-radius:6
 [data-theme="light"] kbd{background:rgba(0,0,0,.07)}
 ::selection{background:var(--acc);color:#000}
 .bg-orbs{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.orb{position:absolute;border-radius:50%;filter:blur(110px);opacity:.5;animation:float 14s ease-in-out infinite alternate}
-.o1{width:560px;height:560px;background:radial-gradient(circle,#ff7a18,transparent 70%);top:-160px;left:-120px}
-.o2{width:620px;height:620px;background:radial-gradient(circle,#7a2bff,transparent 70%);top:20%;right:-200px;opacity:.35;animation-delay:-4s}
-.o3{width:520px;height:520px;background:radial-gradient(circle,#d6f650,transparent 70%);bottom:-200px;left:30%;opacity:.18;animation-delay:-8s}
+.orb{position:absolute;border-radius:50%;filter:blur(110px);opacity:.45;animation:drift 18s ease-in-out infinite alternate}
+.o1{width:600px;height:600px;background:radial-gradient(circle,#ff7a18,transparent 70%);top:-180px;left:-140px}
+.o2{width:560px;height:560px;background:radial-gradient(circle,#ff3d8e,transparent 70%);top:6%;right:-180px;opacity:.32;animation-delay:-6s}
+.o3{width:640px;height:640px;background:radial-gradient(circle,#ffc93c,transparent 70%);bottom:-240px;left:32%;opacity:.22;animation-delay:-12s}
+.o4{width:420px;height:420px;background:radial-gradient(circle,#7a2bff,transparent 70%);top:38%;left:-160px;opacity:.28;animation-delay:-3s}
+.o5{width:460px;height:460px;background:radial-gradient(circle,#ff3d00,transparent 70%);bottom:-160px;right:-120px;opacity:.3;animation-delay:-9s}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,36px) scale(1.08)}100%{transform:translate(-30px,60px) scale(1.03)}}
 @keyframes float{to{transform:translate(60px,40px) scale(1.1)}}
 .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 main,.nav{position:relative;z-index:2}
