@@ -863,10 +863,10 @@ function renderCook(){
   $("#cookProg").style.width=((cookIdx+1)/n*100)+"%";
   $("#cookPrev").disabled=cookIdx===0;
 }
-function closeCook(){ stopSpeak(); releaseScreen(); $("#cookOverlay").hidden=true; if($("#overlay").hidden) document.body.style.overflow=""; }
-$("#cookPrev").onclick=()=>{stopSpeak();cookIdx--;renderCook();};
-$("#cookNext").onclick=()=>{stopSpeak(); if(cookIdx<currentRecipe.steps.length-1){cookIdx++;renderCook();} else closeCook(); };
-$("#cookDone").onclick=()=>{ closeCook(); toast("Смачного!"); };
+function closeCook(){ stopSpeak(); releaseScreen(); renderSteps(); $("#cookOverlay").hidden=true; if($("#overlay").hidden) document.body.style.overflow=""; }
+$("#cookPrev").onclick=()=>{stopSpeak();doneSteps.delete(cookIdx);cookIdx--;updProg();renderCook();};
+$("#cookNext").onclick=()=>{stopSpeak(); if(!currentRecipe) return; doneSteps.add(cookIdx); if(cookIdx<currentRecipe.steps.length-1){cookIdx++;updProg();renderCook();} else { currentRecipe.steps.forEach((_,i)=>doneSteps.add(i)); updProg(); closeCook(); } };
+$("#cookDone").onclick=()=>{ if(currentRecipe) currentRecipe.steps.forEach((_,i)=>doneSteps.add(i)); updProg(); closeCook(); toast("Смачного!"); };
 $("#cookX").onclick=closeCook;
 // wake lock: екран не гасне під час готування
 let wakeLock=null;
