@@ -1157,7 +1157,7 @@ async function checkUpdate(){
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});
     if(!r.ok) return;
     const {v}=await r.json();
-    if(v&&v!==APP_VERSION&&!updateShown) showUpdateBar(v);
+    if(v&&v>APP_VERSION&&!updateShown) showUpdateBar(v);
   }catch{}
 }
 function showUpdateBar(v){
