@@ -722,8 +722,29 @@ function confetti(){
 }
 
 // add-recipe form
-let editingId=null;
-function closeAdd(){ editingId=null; $("#addOverlay").hidden=true; if($("#overlay").hidden&&$("#cookOverlay").hidden) document.body.style.overflow=""; }
+let editingId=null, customPhoto="";
+function resetPhoto(){ customPhoto=""; const p=$("#fPreview"); if(p){p.hidden=true;p.removeAttribute("src");} const f=$("#fPhoto"); if(f) f.value=""; }
+function closeAdd(){ editingId=null; resetPhoto(); $("#addOverlay").hidden=true; if($("#overlay").hidden&&$("#cookOverlay").hidden) document.body.style.overflow=""; }
+$("#fPhoto").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  if(f.size>12*1024*1024){ toast("Файл завеликий (макс 12 МБ)"); return; }
+  const url=URL.createObjectURL(f), img=new Image();
+  img.onload=()=>{
+    try{
+      const max=900, k=Math.min(1,max/Math.max(img.width,img.height));
+      const cv=document.createElement("canvas");
+      cv.width=Math.round(img.width*k); cv.height=Math.round(img.height*k);
+      cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+      customPhoto=cv.toDataURL("image/jpeg",0.82);
+      const p=$("#fPreview"); p.src=customPhoto; p.hidden=false;
+      $("#fImg").value="";
+      toast("Фото додано");
+    }catch{ toast("Не вдалось прочитати фото"); }
+    URL.revokeObjectURL(url);
+  };
+  img.onerror=()=>{ URL.revokeObjectURL(url); toast("Не вдалось прочитати фото"); };
+  img.src=url;
+});
 $("#addRecipeBtn").onclick=()=>{ $("#addOverlay").hidden=false; document.body.style.overflow="hidden"; setTimeout(()=>$("#fTitle").focus(),50); };
 $("#addX").onclick=closeAdd;
 $("#fCancel").onclick=closeAdd;
@@ -744,7 +765,7 @@ $("#fSave").onclick=()=>{
   const oldImg=editingId?(getCustom().find(x=>x.id===editingId)||{}).img:"";
   const rec={
     id, title, desc:$("#fDesc").value.trim()||"Мій власний рецепт.",
-    img:/^https:\/\//.test(imgUrl)?imgUrl:(oldImg||`https://picsum.photos/seed/${id}/900/600`),
+    img:/^https:\/\//.test(imgUrl)?imgUrl:(customPhoto||oldImg||`https://picsum.photos/seed/${id}/900/600`),
     time:Math.min(480,Math.max(5,+$("#fTime").value||30)),
     kcal:Math.min(2000,Math.max(10,+$("#fKcal").value||350)),
     level:$("#fLevel").value, cat:$("#fCat").value, diet, ings, steps
@@ -769,6 +790,7 @@ $("#customEdit").onclick=()=>{
   $("#fCat").value=r.cat; $("#fLevel").value=r.level;
   document.querySelectorAll(".fDiet").forEach(x=>x.checked=(r.diet||[]).includes(x.value));
   $("#fImg").value=/picsum\.photos\/seed/.test(r.img||"")?"":r.img;
+  if(/^data:image/.test(r.img||"")){ const p=$("#fPreview"); p.src=r.img; p.hidden=false; customPhoto=r.img; }
   $("#fIngs").value=r.ings.map(i=>i.a?`${i.n} — ${i.a}`:i.n).join("\n");
   $("#fSteps").value=r.steps.join("\n");
   $("#addOverlay").hidden=false;
