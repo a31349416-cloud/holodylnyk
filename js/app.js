@@ -1099,9 +1099,21 @@ try{
   $("#"+id).addEventListener("change",persistFilters);
 });
 
-// PWA service worker
+// PWA service worker + update notice
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js").then(reg=>{
+      reg.onupdatefound=()=>{
+        const w=reg.installing;
+        if(!w) return;
+        w.onstatechange=()=>{
+          if(w.state==="installed"&&navigator.serviceWorker.controller){
+            toast("Вийшло оновлення — перезавантаж сторінку");
+          }
+        };
+      };
+    }).catch(()=>{});
+  });
 }
 
 // SEO: JSON-LD ItemList
