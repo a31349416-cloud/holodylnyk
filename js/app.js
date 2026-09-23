@@ -90,15 +90,17 @@ function scaleAmount(a, portions){
 let currentRecipe = null, portions = 2, timerSec = 600, timerId = null, timerLeft = 600, doneSteps = new Set(), cookIdx = 0;
 let lastItems = [];
 let onlyMine = false, onlySeason = false, onlyCooked = false;
-// seasons: autumn (Sep–Nov), winter (Dec–Feb), spring (Mar–May)
+// seasons: spring (Mar–May), summer (Jun–Aug), autumn (Sep–Nov), winter (Dec–Feb)
 const SEASON_IDS = ["pumpkin-soup","pumpkin-porridge","mushroom-soup","mushroom-yushka","apple-pie","medovyk","uzvar","cottage-casserole","kysil","banosh"];
 const WINTER_IDS = ["uzvar","kutia","holodets","medovyk","cheesecake-no-bake","syrnyky","roast-chicken","solyanka"];
 const SPRING_IDS = ["green-borsch","okroshka","peking-salad","avocado-toast","berry-smoothie","beet-salad","buckwheat-bowl","tuna-bowl"];
+const SUMMER_IDS = ["shashlyk","lyulya","gazpacho","beet-soup-cold","grill-veg","watermelon-feta","mint-lemonade","homemade-icecream","okroshka","cucumber-lemonade","berry-lemonade"];
 function seasonEmoji(r){
   const m=new Date().getMonth();
   if((m===8||m===9||m===10)&&SEASON_IDS.includes(r.id)) return "🍂 сезон";
   if((m===11||m===0||m===1)&&WINTER_IDS.includes(r.id)) return "❄️ сезон";
   if((m===2||m===3||m===4)&&SPRING_IDS.includes(r.id)) return "🌷 сезон";
+  if((m===5||m===6||m===7)&&SUMMER_IDS.includes(r.id)) return "☀️ сезон";
   return "";
 }
 function isSeason(r){ return !!seasonEmoji(r); }
