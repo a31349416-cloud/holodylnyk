@@ -1230,6 +1230,15 @@ try{
   document.head.appendChild(sc);
 }catch{}
 
+// deep links: URL params (?week=1, ?random=1, ?q=борщ)
+function parseURL(){
+  let p;
+  try{ p=new URLSearchParams(location.search); }catch{ return; }
+  if(p.has("q")){ $("#q").value=p.get("q")||""; persistFilters(); render(); }
+  if(p.get("week")==="1"){ weekPlan=genWeek(); renderWeek(); renderPlans(); $("#weekOverlay").hidden=false; document.body.style.overflow="hidden"; }
+  else if(p.get("random")==="1"&&lastItems.length){ const r=lastItems[Math.floor(Math.random()*lastItems.length)]; openModal(r.id); }
+}
+
 // deep link #r-id
 function openDeep(){
   const m=(location.hash||"").match(/^#r-(.+)/);
@@ -1251,4 +1260,4 @@ try{
 }catch{}
 
 // init
-renderChips();renderExcl();render();renderDrawer();renderRecent();renderKitchen();renderDishDay();openDeep();
+renderChips();renderExcl();render();renderDrawer();renderRecent();renderKitchen();renderDishDay();parseURL();openDeep();
