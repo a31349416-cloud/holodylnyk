@@ -1191,7 +1191,7 @@ try{
 });
 
 // instant updates: version check with one-click refresh
-const APP_VERSION = 28;
+const APP_VERSION = 29;
 let updateShown = false;
 async function checkUpdate(){
   try{
