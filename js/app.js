@@ -542,9 +542,34 @@ function renderAutoTimers(){
 }
 $("#autoTimers").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
-  timerSec=(+b.dataset.m)*60; timerLeft=timerSec; stopTimer();
-  document.querySelectorAll(".timer-row button[data-t]").forEach(x=>x.classList.remove("on"));
-  $("#timerStart").textContent="Старт"; resetTimerUI(); document.title=baseTitle(); toast(`Таймер: ${b.dataset.m} хв`);
+  addExtraTimer(+b.dataset.m);
+});
+// parallel timers (one shared ticker)
+let extraTimers=[], extraTick=null, extraSeq=0;
+function addExtraTimer(mins){
+  extraTimers.push({id:++extraSeq,left:mins*60,total:mins*60});
+  renderExtraTimers();
+  if(!extraTick) extraTick=setInterval(()=>{
+    extraTimers.forEach(t=>t.left--);
+    const done=extraTimers.filter(t=>t.left<=0);
+    if(done.length){
+      extraTimers=extraTimers.filter(t=>t.left>0);
+      done.forEach(()=>{ toast("⏱ Таймер готовий!"); beep(); });
+    }
+    if(!extraTimers.length){ clearInterval(extraTick); extraTick=null; }
+    renderExtraTimers();
+  },1000);
+  toast(`Таймер на ${mins} хв пішов`);
+}
+function renderExtraTimers(){
+  const box=$("#timerList"); if(!box) return;
+  box.innerHTML=extraTimers.map(t=>`<div class="timer-item">⏱ <b>${fmtT(Math.max(0,t.left))}</b><span>з ${Math.round(t.total/60)} хв</span><button data-x="${t.id}" aria-label="Прибрати">✕</button></div>`).join("");
+}
+$("#timerList").addEventListener("click",e=>{
+  const b=e.target.closest("[data-x]"); if(!b) return;
+  extraTimers=extraTimers.filter(t=>t.id!==+b.dataset.x);
+  if(!extraTimers.length&&extraTick){ clearInterval(extraTick); extraTick=null; }
+  renderExtraTimers();
 });
 function tipFor(r){
   const tips={

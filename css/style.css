@@ -237,6 +237,11 @@ main,.nav{position:relative;z-index:2}
 .timer-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .timer-chips button{background:rgba(255,122,24,.12);border:1px solid rgba(255,122,24,.4);color:var(--txt);border-radius:100px;padding:6px 12px;font-size:12.5px;font-weight:800;cursor:pointer}
 .timer-chips button:hover{background:var(--acc);color:#fff}
+.timer-list{display:grid;gap:6px;margin-top:10px}
+.timer-list:empty{display:none}
+.timer-item{display:flex;gap:8px;align-items:center;background:rgba(255,122,24,.1);border:1px solid rgba(255,122,24,.35);border-radius:12px;padding:7px 10px;font-size:13px;font-weight:800}
+.timer-item b{font-family:var(--font-d);font-size:15px}
+.timer-item button{margin-left:auto;background:none;border:0;color:var(--mut);cursor:pointer;font-size:14px}
 .footer{max-width:1180px;margin:20px auto 40px;padding:26px 20px;display:flex;justify-content:space-between;gap:16px;color:var(--mut);font-size:14px;flex-wrap:wrap}
 .footer b{font-family:var(--font-d);color:#fff}
 
