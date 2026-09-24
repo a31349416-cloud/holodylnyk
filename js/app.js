@@ -198,7 +198,7 @@ chipsEl.addEventListener("click",e=>{
   selected.delete(b.dataset.x); renderChips(); render();
 });
 function addIng(v){
-  v=norm(v); if(!v) return;
+  v=norm(v).slice(0,40); if(!v) return;
   v=v.replace(/^[+\-*\s]+/,"");
   if(selected.has(v)) return;
   selected.add(v); ingInput.value=""; renderChips(); render();
@@ -236,7 +236,7 @@ $("#exclChips").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
   excluded.delete(b.dataset.e); renderExcl(); render();
 });
-function addExcl(v){ v=norm(v); if(!v) return; excluded.add(v); exclInput.value=""; $("#exclSuggest").innerHTML=""; renderExcl(); render(); }
+function addExcl(v){ v=norm(v).slice(0,40); if(!v) return; excluded.add(v); exclInput.value=""; $("#exclSuggest").innerHTML=""; renderExcl(); render(); }
 exclInput.addEventListener("keydown",e=>{ if(e.key==="Enter") addExcl(exclInput.value); });
 exclInput.addEventListener("input",()=>{
   const v=norm(exclInput.value), box=$("#exclSuggest");
@@ -322,7 +322,7 @@ function render(){
   try{$("#statCooked").textContent=getCooked().length;}catch{}
   updateCatCounts();
   const avg=items.length?Math.round(items.reduce((a,r)=>a+r.time,0)/items.length):0;
-  const avgEl=$("#statAvg"); if(avgEl&&avg) avgEl.textContent=`~${fmtDur(avg)}`;
+  const avgEl=$("#statAvg"); if(avgEl) avgEl.textContent=avg?`~${fmtDur(avg)}`:"—";
   $("#favCount").textContent=favs.size;
   $("#listCount").textContent=shopList.length;
   const exclTxt=excluded.size?` • без: ${[...excluded].join(", ")}`:"";
@@ -449,13 +449,15 @@ $("#emptySample").onclick=()=>{
 };
 // dish of the day (deterministic by date)
 function dishOfDay(){
-  const all=allRecipes().filter(r=>!hidden.has(r.id)); if(!all.length) return null;
+  const all=allRecipes().filter(r=>!hidden.has(r.id)&&!isExcluded(r)); if(!all.length) return null;
   const now=new Date();
   const day=Math.floor(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())/864e5);
   return all[day%all.length];
 }
 function renderDishDay(){
-  const r=dishOfDay(), box=$("#dishDay"); if(!r||!box) return;
+  const r=dishOfDay(), box=$("#dishDay"); if(!box) return;
+  if(!r){ box.style.display="none"; return; }
+  box.style.display="";
   box.dataset.id=r.id;
   box.innerHTML=`<img loading="lazy" decoding="async" src="${r.img}" ${imgAttr(r.img)} alt="" onerror="this.removeAttribute('srcset');this.src='https://picsum.photos/seed/${r.id}/200/200'"><div><small>РЕЦЕПТ ДНЯ</small><b>${esc(r.title)}</b></div><span style="margin-left:auto">→</span>`;
 }
@@ -647,7 +649,7 @@ $("#recentClear").onclick=()=>{ try{localStorage.setItem("hol_recent","[]")}catc
 // week planner
 let weekPlan=[];
 function poolFiltered(){
-  return allRecipes().filter(r=>!isExcluded(r))
+  return allRecipes().filter(r=>!isExcluded(r)&&!hidden.has(r.id))
     .filter(r=>!$("#cat").value||r.cat===$("#cat").value)
     .filter(r=>!$("#diet").value||r.diet.includes($("#diet").value))
     .filter(r=>!$("#level").value||r.level===$("#level").value);
@@ -1053,7 +1055,9 @@ function stopTimer(){clearInterval(timerId);timerId=null;}
 function beep(){
   try{
     const Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return;
-    const ctx=new Ctx(); const o=ctx.createOscillator(); const g=ctx.createGain();
+    const ctx=new Ctx();
+    if(ctx.state==="suspended") ctx.resume().catch(()=>{});
+    const o=ctx.createOscillator(); const g=ctx.createGain();
     o.connect(g); g.connect(ctx.destination); o.frequency.value=880; o.type="sine";
     g.gain.setValueAtTime(0.2,ctx.currentTime); o.start();
     o.stop(ctx.currentTime+0.5); o.onended=()=>ctx.close();
@@ -1096,6 +1100,12 @@ $("#restoreInput").addEventListener("change",e=>{
       const data=JSON.parse(rd.result);
       if(!data||typeof data!=="object") throw 0;
       HOL_KEYS.forEach(k=>{ if(k in data) localStorage.setItem(k,JSON.stringify(data[k])); });
+      try{
+        const shop=JSON.parse(localStorage.getItem("hol_shop")||"[]");
+        localStorage.setItem("hol_shop",JSON.stringify(
+          (Array.isArray(shop)?shop:[]).filter(e=>e&&(typeof e.n==="string"||typeof e==="string")).map(e=>typeof e==="string"?{n:e.slice(0,60),a:""}:{n:String(e.n||"").slice(0,60),a:String(e.a||"").slice(0,40),from:String(e.from||"").slice(0,60)})
+        ));
+      }catch{}
       toast("Відновлено — перезавантажую"); setTimeout(()=>location.reload(),900);
     }catch{ toast("Битий файл бекапу"); }
   };
