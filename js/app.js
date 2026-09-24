@@ -129,7 +129,10 @@ $("#themeToggle").onclick=()=>applyTheme(document.documentElement.dataset.theme=
 
 // custom user recipes
 function getCustom(){ try{const v=JSON.parse(localStorage.getItem("hol_custom")||"[]");return Array.isArray(v)?v:[]}catch{return[]} }
-function saveCustom(c){ try{localStorage.setItem("hol_custom",JSON.stringify(c))}catch{} }
+function saveCustom(c){
+  try{localStorage.setItem("hol_custom",JSON.stringify(c));return true;}
+  catch{ toast("Не влізло в сховище — прибери фото"); return false; }
+}
 function allRecipes(){ return [...window.RECIPES, ...getCustom()]; }
 function findRecipe(id){ return allRecipes().find(x=>x.id===id); }
 function isOwn(r){ return r&&String(r.id).startsWith("u-"); }
@@ -244,8 +247,8 @@ $("#exclSuggest").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(b) addExcl(b.dataset.v||b.textContent);
 });
 function isExcluded(recipe){
-  const hay=(recipe.title+" "+recipe.ings.map(i=>i.n).join(" ")).toLowerCase();
-  return [...excluded].some(x=>hay.includes(x));
+  const words=(recipe.title+" "+recipe.ings.map(i=>i.n).join(" ")).toLowerCase().split(/[^a-zа-яёїієґ']+/);
+  return [...excluded].some(x=>words.some(w=>w&&ingMatch(w,x)));
 }
 
 // voice input
@@ -266,7 +269,7 @@ $("#voiceBtn").onclick=()=>{
 // matching
 function score(recipe){
   if(selected.size===0) return {pct:0,have:0,miss:recipe.ings.map(i=>i.n)};
-  let have=[],miss=[];
+  const have=[],miss=[];
   recipe.ings.forEach(ing=>{
     const ok=isStaple(ing.n)||[...selected].some(s=>ingMatch(ing.n,s));
     (ok?have:miss).push(ing.n);
@@ -336,7 +339,7 @@ function render(){
         <button class="fav ${favs.has(r.id)?'on':''}" data-fav="${r.id}" aria-label="В улюблене">${favs.has(r.id)?'♥':'♡'}</button>
       </div>
       <div class="card-body">
-        <h3>${hl(r.title,q)}</h3><p>${r.desc}</p>
+        <h3>${hl(r.title,q)}</h3><p>${esc(r.desc||"")}</p>
         ${rateMini(r.id)}
         <div class="meta"><span class="t">⏱ ${fmtDur(r.time)}</span><span>${r.kcal} ккал</span><span>${r.level}</span><span>${r.cat}</span>${dietBadges(r)}${isOwn(r)?'<span class="own-tag">✎ моє</span>':""}${seasonEmoji(r)?`<span class="diet-tag">${seasonEmoji(r)}</span>`:""}</div>
         ${selected.size?`<div class="miss">${r._s.miss.length?`Докупити: <b>${r._s.miss.slice(0,3).join(", ")}${r._s.miss.length>3?"…":""}</b>`:"✅ Все є! Можна готувати"}</div>`:`<div class="miss">Натисни щоб відкрити рецепт →</div>`}
@@ -349,7 +352,7 @@ function render(){
   attachTilt();
 }
 // subtle 3D tilt (desktop pointers only)
-let tiltOn = window.matchMedia && window.matchMedia("(pointer:fine)").matches;
+const tiltOn = window.matchMedia && window.matchMedia("(pointer:fine)").matches;
 function attachTilt(){
   if(!tiltOn) return;
   document.querySelectorAll(".card").forEach(card=>{
@@ -405,6 +408,7 @@ function hl(text,q){
   }catch{return safe;}
 }
 // category counts
+let lastCatHTML="";
 function updateCatCounts(){
   const q=norm($("#q").value), diet=$("#diet").value, mt=$("#maxTime").value, mk=$("#maxKcal").value, lv=$("#level").value;
   const base=allRecipes().filter(r=>
@@ -412,11 +416,12 @@ function updateCatCounts(){
     (!diet||r.diet.includes(diet))&&(!mt||r.time<=+mt)&&(!mk||r.kcal<=+mk)&&(!lv||r.level===lv)&&!isExcluded(r));
   const cats=["","сніданки","перші страви","основні","паста","салати","десерти"];
   const sel=$("#cat").value;
-  $("#cat").innerHTML=cats.map(c=>{
+  const html=cats.map(c=>{
     const n=c?base.filter(r=>r.cat===c).length:base.length;
     const label=c||"Всі категорії";
     return `<option value="${c}" ${c===sel?"selected":""}>${label} (${n})</option>`;
   }).join("");
+  if(html!==lastCatHTML){ $("#cat").innerHTML=html; lastCatHTML=html; }
 }
 function toggleFav(id){
   favs.has(id)?favs.delete(id):favs.add(id);
@@ -469,7 +474,7 @@ $("#cookbookBtn").onclick=()=>{
 
 // random (respects current filters)
 $("#randomBtn").onclick=()=>{
-  const pool=lastItems.length?lastItems:allRecipes();
+  const pool=(lastItems.length?lastItems:allRecipes().filter(r=>!hidden.has(r.id)));
   const r=pool[Math.floor(Math.random()*pool.length)];
   openModal(r.id); toast(pool===lastItems?`Шеф обрав з ${pool.length} під фільтри`:"Шеф обрав за тебе");
 };
@@ -537,7 +542,7 @@ $("#autoTimers").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
   timerSec=(+b.dataset.m)*60; timerLeft=timerSec; stopTimer();
   document.querySelectorAll(".timer-row button[data-t]").forEach(x=>x.classList.remove("on"));
-  $("#timerStart").textContent="Старт"; resetTimerUI(); toast(`Таймер: ${b.dataset.m} хв`);
+  $("#timerStart").textContent="Старт"; resetTimerUI(); document.title=baseTitle(); toast(`Таймер: ${b.dataset.m} хв`);
 });
 function tipFor(r){
   const tips={
@@ -571,7 +576,7 @@ $("#mIngs").addEventListener("click",e=>{
 $("#minus").onclick=()=>{if(portions>1)portions--;renderModalIngs();};
 $("#plus").onclick=()=>{if(portions<12)portions++;renderModalIngs();};
 function renderSteps(){
-  $("#mSteps").innerHTML=currentRecipe.steps.map((s,i)=>`<li data-i="${i}" class="${doneSteps.has(i)?'done':''}">${s}</li>`).join("");
+  $("#mSteps").innerHTML=currentRecipe.steps.map((s,i)=>`<li data-i="${i}" class="${doneSteps.has(i)?'done':''}">${esc(s)}</li>`).join("");
   updProg();
 }
 $("#mSteps").addEventListener("click",e=>{
@@ -836,7 +841,7 @@ $("#fSave").onclick=()=>{
   const c=getCustom();
   const ix=c.findIndex(x=>x.id===id);
   if(ix>=0) c[ix]=rec; else c.push(rec);
-  saveCustom(c);
+  if(!saveCustom(c)) return;
   ["fTitle","fDesc","fImg","fIngs","fSteps"].forEach(i=>$("#"+i).value="");
   document.querySelectorAll(".fDiet:checked").forEach(x=>x.checked=false);
   const wasEdit=!!editingId;
@@ -1027,7 +1032,7 @@ function fmtDur(m){
 }
 function resetTimerUI(){$("#timerDigits").textContent=fmtT(timerLeft);}
 document.querySelectorAll(".timer-row button[data-t]").forEach(b=>{
-  b.onclick=()=>{document.querySelectorAll(".timer-row button[data-t]").forEach(x=>x.classList.remove("on"));b.classList.add("on");timerSec=+b.dataset.t*60;timerLeft=timerSec;stopTimer();resetTimerUI();};
+  b.onclick=()=>{document.querySelectorAll(".timer-row button[data-t]").forEach(x=>x.classList.remove("on"));b.classList.add("on");timerSec=+b.dataset.t*60;timerLeft=timerSec;stopTimer();$("#timerStart").textContent="Старт";resetTimerUI();document.title=baseTitle();};
 });
 function baseTitle(){
   return currentRecipe&&!$("#overlay").hidden?`${currentRecipe.title} — HOLODYLNYK`:"HOLODYLNYK — що приготувати з того, що є";
@@ -1118,7 +1123,7 @@ $("#selfTestBtn").onclick=()=>{
   const ids=new Set(), cats=new Set(["сніданки","перші страви","основні","паста","салати","десерти"]);
   const diets=new Set(["вегетаріанське","веганське","без лактози"]);
   window.RECIPES.forEach((r,i)=>checkRecipe(r,`#${i} `,bad,ids,cats,diets));
-  getCustom().forEach((r,i)=>checkRecipe(r,"моє ",bad,ids,cats,diets));
+  getCustom().forEach((r)=>checkRecipe(r,"моє ",bad,ids,cats,diets));
   const total=window.RECIPES.length+getCustom().length;
   toast(bad.length?`Знайдено проблем: ${bad.length} (${bad[0]})`:`Все чисто: ${total} рецептів OK`);
 };
