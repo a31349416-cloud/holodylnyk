@@ -382,7 +382,7 @@ $("#quickRow").addEventListener("click",e=>{
 });
 grid.addEventListener("click",e=>{
   const h=e.target.closest("[data-hide]");
-  if(h){e.stopPropagation();hidden.add(h.dataset.hide);saveHidden();render();toast("Приховано — повернути можна нижче фільтрів");return;}
+  if(h){e.stopPropagation();hidden.add(h.dataset.hide);saveHidden();render();renderDishDay();toast("Приховано — повернути можна нижче фільтрів");return;}
   const f=e.target.closest("[data-fav]");
   if(f){e.stopPropagation();toggleFav(f.dataset.fav);return;}
   const c=e.target.closest(".card"); if(c) openModal(c.dataset.id);
@@ -432,8 +432,8 @@ function toggleFav(id){
   const h=()=>{persistFilters();render();};
   $("#"+id).addEventListener("input",id==="q"?debounce(h,180):h);
 });
-$("#unhideBtn").onclick=()=>{ hidden.clear(); saveHidden(); render(); };
-$("#clearAll").onclick=()=>{selected.clear();excluded.clear();onlyMine=false;onlySeason=false;onlyCooked=false;$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#maxKcal").value="";$("#level").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;$("#staples").checked=true;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();};
+$("#unhideBtn").onclick=()=>{ hidden.clear(); saveHidden(); render(); renderDishDay(); };
+$("#clearAll").onclick=()=>{selected.clear();excluded.clear();onlyMine=false;onlySeason=false;onlyCooked=false;$("#q").value="";$("#cat").value="";$("#diet").value="";$("#maxTime").value="";$("#maxKcal").value="";$("#level").value="";$("#sort").value="match";$("#onlyFav").checked=false;$("#onlyPossible").checked=false;$("#staples").checked=true;document.querySelectorAll("#quickRow button").forEach(b=>b.classList.remove("on"));renderChips();renderExcl();persistFilters();render();renderDishDay();};
 $("#emptyReset").onclick=()=>$("#clearAll").click();
 $("#emptyFast").onclick=()=>{ $("#clearAll").click(); $("#maxTime").value="30"; $("#sort").value="time"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
 $("#emptyTop").onclick=()=>{ $("#clearAll").click(); $("#sort").value="rate"; persistFilters(); render(); document.querySelector("#grid-section").scrollIntoView({behavior:"smooth"}); };
@@ -628,6 +628,7 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Tab") trapTab(e);
   if(e.target.matches("input,select,textarea")) return;
   if(e.key==="?"){ $("#helpOverlay").hidden=false; return; }
+  if((e.key==="r"||e.key==="R"||e.key==="к"||e.key==="К")&&$("#overlay").hidden&&$("#cookOverlay").hidden&&$("#weekOverlay").hidden&&$("#addOverlay").hidden&&$("#helpOverlay").hidden&&$("#drawerWrap").hidden){ $("#randomBtn").click(); return; }
 });
 // focus trap: Tab не виходить з верхнього відкритого вікна
 function topOverlay(){
